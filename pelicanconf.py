@@ -3,7 +3,7 @@
 
 AUTHOR = 'OmegaVoid'
 SITENAME = 'OmegaVoid - Blog of Many Things'
-SITEURL = ''
+SITEURL = 'https://omega-void.github.io'
 SITETITLE = "OmegaVoid"
 SITESUBTITLE = "Blog of Many Things"
 SITEDESCRIPTION= ""
@@ -47,7 +47,7 @@ THM = (('https://tryhackme.com/badge/127811'))
 DEFAULT_PAGINATION = 10
 
 # Uncomment following line if you want document-relative URLs when developing
-#RELATIVE_URLS = True
+RELATIVE_URLS = True
 
 ### Images
 STATIC_PATHS = ['images']
