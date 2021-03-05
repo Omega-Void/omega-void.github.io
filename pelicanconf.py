@@ -47,7 +47,6 @@ THM = (('https://tryhackme.com/badge/127811'))
 
 DEFAULT_PAGINATION = 10
 
-# Uncomment following line if you want document-relative URLs when developing
 RELATIVE_URLS = False
 
 ### Images
@@ -63,7 +62,6 @@ HOME_HIDE_TAGS = False
 
 #MENU
 MENUITEMS = (
-    ("Home", "/index.html"),
     ("Rants", "/category/rants.html"),
 #    ("Writeups", "/category/writeups.html"),
 #    ("Tutorials", "/category/tutorials.thml"),
