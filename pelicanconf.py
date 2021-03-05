@@ -63,6 +63,7 @@ HOME_HIDE_TAGS = False
 
 #MENU
 MENUITEMS = (
+    ("Home", "/index.html"),
     ("Rants", "/category/rants.html"),
 #    ("Writeups", "/category/writeups.html"),
 #    ("Tutorials", "/category/tutorials.thml"),
