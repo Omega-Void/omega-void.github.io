@@ -5,7 +5,7 @@ Category: Rants
 Tags: rants
 Slug: hello-world
 Authors: OmegaVoid
-Summary: This is the mandatory "hello world" post that any creator must go through. Also something interesting coming soon. 
+Summary: This is the mandatory "hello world" post that any creator must go through. Also, something interesting coming soon. Read more inside.
 
 This is the mandatory "hello world" post that any creator must go through. Welcome to my first blog.
 
