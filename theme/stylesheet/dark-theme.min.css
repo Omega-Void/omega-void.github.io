@@ -32,8 +32,8 @@ main article pre {
  border-left:8px solid #ffffff33
 }
 main article :not(pre)>code {
- background-color:#080808;
- border-color:#000
+ background-color:#222;
+ border-color:#151515
 }
 main article div#tipue_search_content .tipue_search_result span.tipue_search_content_bold {
  color:#fff

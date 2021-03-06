@@ -183,9 +183,9 @@ main article kbd {
  font-size:.78em
 }
 main article :not(pre)>code {
- font-size:.8em;
+ font-size:.95em;
  white-space:nowrap;
- color:#c25;
+ color:#e65c0a;
  padding:1px 3px;
  background-color:#f7f7f9;
  border:1px solid #e1e1e8;
