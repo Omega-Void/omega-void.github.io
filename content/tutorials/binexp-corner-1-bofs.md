@@ -232,7 +232,7 @@ except:
 
 ```
 
-We execute this and we see that the application crashes. Because we know when the function returns it writes the return address to EIP we will look at the value of EIP when it crashes. In Immunity Debugger we see:
+We execute this and we see that the application crashes. Because we know that when the function returns it writes the return address to EIP we will look at the value of EIP when it crashes. In Immunity Debugger we see:
 
 ![The value of EIP after the cyclic pattern is used in the overflow](/images/binexp-corner-1/bof3.png)
 
