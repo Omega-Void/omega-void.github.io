@@ -170,7 +170,7 @@ Trust your debugger.&lt;/p&gt;
     &lt;span class="n"&gt;sys&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;exit&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
 
-&lt;p&gt;We execute this and we see that the application crashes, and in Immunity Debugger we see:&lt;/p&gt;
+&lt;p&gt;We execute this and we see that the application crashes. Because we know that when the function returns it writes the return address to EIP we will look at the value of EIP when it crashes. In Immunity Debugger we see:&lt;/p&gt;
 &lt;p&gt;&lt;img alt="The value of EIP after the cyclic pattern is used in the overflow" src="/images/binexp-corner-1/bof3.png"&gt;&lt;/p&gt;
 &lt;p&gt;&lt;code&gt;70433570&lt;/code&gt; - is the value of the EIP when we fed it the cyclic payload. We have two options of using this to get the value of the offset.&lt;/p&gt;
 &lt;p&gt;The first is to use the metasploit pattern_offset.rb tool to do this:&lt;/p&gt;
