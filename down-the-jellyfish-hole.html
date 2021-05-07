@@ -153,7 +153,7 @@
 <p>For me it would usually be coming up with something technical that I like or a technique that I'd want to showcase and then thinking "you know what, this fits in quite nicely with the theme" ... and again, here's a hint...</p>
 </blockquote>
 <p>And this led me down a deep dark path of the Jellyfin rabbit hole. Jellyfin is a free software Media System, where people can collect, manage and stream their media. And the name kind of reminded me of Jellyfish. After hearing this I was fully convinced that Jellyfin must have been the way to obtain a foothold, so I was going to go at it hard. And so I entered the rabbit hole.</p>
-<h2>JellyFin</h2>
+<h2>Jellyfin</h2>
 <p>I went to page 8096, and was greeted by a login page. </p>
 <p><img alt="Jellyfin Login Page" src="/images/jellyfish/jellyfin-login.png"></p>
 <p>Except I didn't have a user or a password. Trying to recover the password, I get a message that I have to be "at home" to be able to do password recovery. Ok. So that's something, Lucky for me, I was able to leak the IP from the internal THM network via one of the requests that the browser makes when accessing JellyFin. So connected to that internal IP via the THM OpenVPN, rather than going through the public IP. This gave me the ability to attack a bit faster and be a bit less worried about what my traffic was looking like to my ISP.</p>
