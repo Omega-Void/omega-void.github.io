@@ -41,7 +41,7 @@ Turns out, that was the route to finish the box, but Muir had patched only enoug
 
 And this led me down a deep dark path of the Jellyfin rabbit hole. Jellyfin is a free software Media System, where people can collect, manage and stream their media. And the name kind of reminded me of Jellyfish. After hearing this I was fully convinced that Jellyfin must have been the way to obtain a foothold, so I was going to go at it hard. And so I entered the rabbit hole.
 
-## JellyFin
+## Jellyfin
 I went to page 8096, and was greeted by a login page. 
 
 ![Jellyfin Login Page](/images/jellyfish/jellyfin-login.png)
