@@ -1,0 +1,257 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="HandheldFriendly" content="True" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="" />
+
+  <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:ital,wght@0,400;0,700;1,400&family=Source+Sans+Pro:ital,wght@0,300;0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" type="text/css" href="/theme/stylesheet/style.min.css">
+
+    <link id="dark-theme-style" rel="stylesheet" type="text/css"
+    href="/theme/stylesheet/dark-theme.min.css">
+
+    <link id="pygments-dark-theme" rel="stylesheet" type="text/css"
+          href="/theme/pygments/tomorrow_night.min.css">
+
+
+  <link rel="stylesheet" type="text/css" href="/theme/font-awesome/css/fontawesome.css">
+  <link rel="stylesheet" type="text/css" href="/theme/font-awesome/css/brands.css">
+  <link rel="stylesheet" type="text/css" href="/theme/font-awesome/css/solid.css">
+
+
+    <link href="/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="OmegaVoid - Blog of Many Things Atom">
+
+
+    <link rel="shortcut icon" href="https://omega-void.github.io/images/favicon.png" type="image/x-icon">
+    <link rel="icon" href="https://omega-void.github.io/images/favicon.png" type="image/x-icon">
+
+
+
+<meta name="author" content="OmegaVoid" />
+<meta name="description" content="Sometimes rabbit holes aren&#39;t a bad thing. The story of how I went to do a Challenge on TryHackMe and came out with a CVE on the other side." />
+<meta name="keywords" content="rants, cve, CVE-2021-29490, jellyfin, vulnerability, tryhackme">
+
+
+<meta property="og:site_name" content="OmegaVoid - Blog of Many Things"/>
+<meta property="og:title" content="Down the Jellyfish Hole"/>
+<meta property="og:description" content="Sometimes rabbit holes aren&#39;t a bad thing. The story of how I went to do a Challenge on TryHackMe and came out with a CVE on the other side."/>
+<meta property="og:locale" content="en_US"/>
+<meta property="og:url" content="/down-the-jellyfish-hole.html"/>
+<meta property="og:type" content="article"/>
+<meta property="article:published_time" content="2021-05-06 12:00:00+01:00"/>
+<meta property="article:modified_time" content="2021-05-06 12:00:00+01:00"/>
+<meta property="article:author" content="/author/omegavoid.html">
+<meta property="article:section" content="Rants"/>
+<meta property="article:tag" content="rants"/>
+<meta property="article:tag" content="cve"/>
+<meta property="article:tag" content="CVE-2021-29490"/>
+<meta property="article:tag" content="jellyfin"/>
+<meta property="article:tag" content="vulnerability"/>
+<meta property="article:tag" content="tryhackme"/>
+<meta property="og:image" content="https://omega-void.github.io/images/OV.png">
+
+  <title>OmegaVoid - Blog of Many Things &ndash; Down the Jellyfish Hole</title>
+
+</head>
+<body class="dark-theme">
+  <aside>
+    <div>
+      <a href="https://omega-void.github.io">
+        <img src="https://omega-void.github.io/images/OV.png" alt="OmegaVoid" title="OmegaVoid">
+      </a>
+
+      <h1>
+        <a href="https://omega-void.github.io">OmegaVoid</a>
+      </h1>
+
+<p>Blog of Many Things</p>
+
+
+      <ul class="social">
+          <li>
+            <a  class="sc-twitter" href="https://twitter.com/subitusnex" target="_blank">
+              <i class="fab fa-twitter"></i>
+            </a>
+          </li>
+          <li>
+            <a  class="sc-linkedin" href="https://www.linkedin.com/in/jo%C3%A3o-zamite-20988b2a/" target="_blank">
+              <i class="fab fa-linkedin"></i>
+            </a>
+          </li>
+          <li>
+            <a  class="sc-github" href="https://github.com/omega-void" target="_blank">
+              <i class="fab fa-github"></i>
+            </a>
+          </li>
+          <li>
+            <a  class="sc-rss" href="./feeds/all.atom.xml" target="_blank">
+              <i class="fas fa-rss"></i>
+            </a>
+          </li>
+      </ul>
+
+    </div>
+
+  </aside>
+  <main>
+
+    <nav>
+      <a href="https://omega-void.github.io">Home</a>
+
+      <a href="/category/rants.html">Rants</a>
+      <a href="/category/tutorials.html">Tutorials</a>
+      <a href="/archives.html">Archives</a>
+      <a href="/pages/about.html">About</a>
+
+     <!--       <a href="/feeds/all.atom.xml">Atom</a>
+
+-->
+    </nav>
+
+<article class="single">
+  <header>
+      
+    <h1 id="down-the-jellyfish-hole">Down the Jellyfish Hole</h1>
+    <p>
+      Posted on Thu 06 May 2021 in <a href="/category/rants.html">Rants</a>
+
+    </p>
+  </header>
+
+
+  <div>
+    <blockquote>
+<p>Note: This post is not a write up of Year of the Jellyfish, but it does contain spoilers. Continue reading at your own risk.</p>
+</blockquote>
+<h2>Year of the Jellyfish</h2>
+<p>This story starts on the release of <a href="https://tryhackme.com/room/yearofthejellyfish">Year of the Jellyfish</a>, a room by Muirland Oracle (or Muir) that you can do at <a href="https://tryhackme.com">TryHackMe.com</a>. When this room released it started with a pretty interesting challenge. Anyone who rooted the room before 6PM UTC on the 30th of April 2021 would be entered into a prize draw, the big prize would be an OSCP voucher donated by one of the Community Mentors, Fawaz (also known as Papaashell).</p>
+<p>I decided I would go deep into this machine and try hard, not because of the prize (I ended up signing up for OSCP anyways afterwards), but more because Muirland promised a realistic machine, and an OSCP-like (in terms of dificulty and ammount of possible rabbit holes in the machine). Additionally, the atmosphere created in the TryHackMe discord became quite positive and fun, so I ended up spending quite a lot of time with this machine. Plus I enjoy Muirland's rooms quite a bit they tend to push me to try harder.</p>
+<p>This machine had a few peculiarities, including having a public IP, which meant that I ended up opting to deploy a VPS for the inital enumeration. The machine was somewhat realistically put together with a few Vhosts and several services running on the machine. It was made to look like something someone would host on their basement, with a small business website, a server monitor and a Media server. The only thing that really seemed strange to me in that regard, was seeing an ssh honeypot on the machine.</p>
+<p>Without going into too much detail, here's more or less what it looked like.</p>
+<div class="highlight"><pre><span></span><code><span class="err">1. Domanin and Vhosts</span>
+<span class="err">    a) robyns-petshop.thm</span>
+<span class="err">    b) monitorr.robyns-petshop.thm</span>
+<span class="err">    c) beta.robyns-petshop.thm</span>
+<span class="err">    d) dev.robyns-petshop.thm</span>
+<span class="err">2. Ports</span>
+<span class="err">    - 22 - OpenSSH 5.9p1 Debian 5ubuntu1.4</span>
+<span class="err">    - 80 - Apache httpd 2.4.29 - Robyn&#39;s Petshop (redirects to 443)</span>
+<span class="err">    - 443 - Apache httpd 2.4.29 - Robyn&#39;s Petshop</span>
+<span class="err">    - 8000 - http - Under Development</span>
+<span class="err">    - 8096 - http - Kestrel - Jellyfin</span>
+<span class="err">    - 22222 - OpenSSH 7.6p1 Ubuntu 4ubuntu0.3 </span>
+</code></pre></div>
+
+<p>Before I went deep into the services hosted on the ports I decided to have a quick look at the vhosts. Beta and dev seemed to be replicating some of the other ports (and I couldn't find any exploitable differences). Monitorr seemed interesting, it was a service monitor solution, it had a login, and the version on the machine had a known <a href="https://nvd.nist.gov/vuln/detail/CVE-2020-28871">upload vulnerability that could lead to RCE</a>. However, testing it out initially I was unable to exploit it, as it seemed Muir had patched it - it would not allow an upload even if we gave the endpoint what seemed valid upload content.</p>
+<p>Turns out, that was the route to finish the box, but Muir had patched only enough so that we would have to exploit both the upload functionality and <a href="https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2020-28872">CVE-2020-28872</a>. However, having thought that the upload was patched threw me off the mark, specially when you combined it with what Muir said when asked about room creation inspiration on a live event later that evening:</p>
+<blockquote>
+<p>For me it would usually be coming up with something technical that I like or a technique that I'd want to showcase and then thinking "you know what, this fits in quite nicely with the theme" ... and again, here's a hint...</p>
+</blockquote>
+<p>And this led me down a deep dark path of the Jellyfin rabbit hole. Jellyfin is a free software Media System, where people can collect, manage and stream their media. And the name kind of reminded me of Jellyfish. After hearing this I was fully convinced that Jellyfin must have been the way to obtain a foothold, so I was going to go at it hard. And so I entered the rabbit hole.</p>
+<h2>JellyFin</h2>
+<p>I went to page 8096, and was greeted by a login page. </p>
+<p><img alt="Jellyfin Login Page" src="/images/jellyfish/jellyfin-login.png"></p>
+<p>Except I didn't have a user or a password. Trying to recover the password, I get a message that I have to be "at home" to be able to do password recovery. Ok. So that's something, Lucky for me, I was able to leak the IP from the internal THM network via one of the requests that the browser makes when accessing JellyFin. So connected to that internal IP via the THM OpenVPN, rather than going through the public IP. This gave me the ability to attack a bit faster and be a bit less worried about what my traffic was looking like to my ISP.</p>
+<p>Once connected via the THM VPN I tried to recover the password for the user 'robyn' (since it's featured in the URL domain). I get the following message.</p>
+<p><img alt="Jellyfin Password Recovery PIN message" src="/images/jellyfish/pin.png"></p>
+<p>And a lightbulb turns on in my head. Maybe I can find a way to to leak that pin, use that to get access to upload a file and somehow get a reverse shell that way.
+I searched around a bit and found: <a href="https://nvd.nist.gov/vuln/detail/CVE-2021-21402">CVE-2021-21402</a> which made me think, that's exactly the kind of thing I need to open the file that has the pin. Except one problem, this affects JellyFin before version 10.7.1, and we had version 10.7.2. Once again, Muiri likes to patch vulnerabilities. Plus, by all signs on your port scan, this was a Linux host.</p>
+<p>The running joke at this time on the discord was to offer only "ENUMERATE" to anyone who asked for a hint. So I decided to take that a bit literally and start using a bit of bug hunting methodology and start enumerating all of the Jellyfin API.</p>
+<p>I did some fuzzing, finding a few endpoints, but I was also abit smarter than that and looked up the github for Jellyfin, finding the <a href="https://github.com/jellyfin/jellyfin/blob/91d6ffd731e163bf281348872c2421598fa4edb2/Jellyfin.Server/Properties/launchSettings.json">launch settings config file</a>. This file has some interesting information for us to look at:</p>
+<div class="highlight"><pre><span></span><code><span class="s2">&quot;Jellyfin.Server (API Docs)&quot;</span><span class="p">:</span> <span class="p">{</span>
+      <span class="s2">&quot;commandName&quot;</span><span class="p">:</span> <span class="s2">&quot;Project&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;launchBrowser&quot;</span><span class="p">:</span> <span class="n">true</span><span class="p">,</span>
+      <span class="s2">&quot;launchUrl&quot;</span><span class="p">:</span> <span class="s2">&quot;api-docs/swagger&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;applicationUrl&quot;</span><span class="p">:</span> <span class="s2">&quot;http://localhost:8096&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;environmentVariables&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;ASPNETCORE_ENVIRONMENT&quot;</span><span class="p">:</span> <span class="s2">&quot;Development&quot;</span>
+      <span class="p">},</span>
+      <span class="s2">&quot;commandLineArgs&quot;</span><span class="p">:</span> <span class="s2">&quot;--nowebclient&quot;</span>
+    <span class="p">}</span>
+</code></pre></div>
+
+<p>This was a big one for me, it immediately reminded me of Ben Sadeghipour (a.k.a. NahamSec) who loves to hunt down Swagger UI because it allows you to interact with APIs right there on the documentation (see <a href="https://twitter.com/NahamSec/status/1177672652011343873">this tweet</a> about it, or <a href="https://twitter.com/NahamSec/status/1280246454884331520">this one</a>). This piece of knowledge had stuck with me from watching some of Ben's streams and presentations. He is an aswesome person and you should check him out too if you have a chance. </p>
+<p>So I go to http://robyns-petshop.thm:8096/api-docs/swagger and get very detailed documentation for the Jellyfin API, it is indeed Swagger UI after all.</p>
+<p><img alt="Jellyfin Swagger UI" src="/images/jellyfish/jelly-swagger.png"></p>
+<p>It felt like a little victory. I had a lot of visibility over everythign that Jellyfin could do, and could easily interact with it all. At this point I was convinced that there was some endpoint that would give me access to the Pin file.</p>
+<p>I went through the API, looking for possible vulnerabilities. At this point I had also come to realize that Jellyfin was a fork from previously open source probject named Emby, when it decided to go proprietary. Emby had a previous vulnerability disclosed - <a href="https://nvd.nist.gov/vuln/detail/CVE-2020-26948">CVE-2020-26948</a>.</p>
+<blockquote>
+<p>Emby Server before 4.5.0 allows SSRF via the Items/RemoteSearch/Image ImageURL parameter.</p>
+</blockquote>
+<p>And this was interesting, that endpoint existed on Jellyfin's API, I poked that that particular endpoint and kept getting Unathorized responses. But strangely, there was another endpoint that did a very similar thing:</p>
+<blockquote>
+<p>/Images/Remote?ImageUrl=&lt;URL&gt;</p>
+</blockquote>
+<p>And this was immediately strange to me. Why would someone replicate an endpoint that did the same thing but with a different name. This also seemed to break the naming convention that was happening throughout the rest of the API.</p>
+<p>Additionally, looking at the API, it seemd that endpoint didn't have HTTP code 401 - Unauthorized as a possible response to that request. It was either 200 or 404. This was interesting. So to do a first test, I tried to access the /web/touchicon.png (the jellyfin logo) on the ImageURL, but requesting it from localhost:8096 instead.</p>
+<blockquote>
+<p>http://&lt;IP_ADDRESS&gt;:8096/Images/Remote?imageUrl=http://localhost:8096/web/touchicon.png</p>
+</blockquote>
+<p>And it delivered the file to me. Ok. I was onto something. I had SSRF, I could make calls as if I was inside the machine. Maybe Muiri had planted a vulnerable endpoint for us to exploit. </p>
+<p>Alas, I wasn't able to extract the PIN file through it, but I had found something interesting. After having used the vulnerability to poke at the server, scanning for internal http servers, but after quite some time with it I didn't find anything that could help me solve the box.</p>
+<p>I let Muri know. He finally let me know that wasn't intended. What seemed like something crafted to be vulnerable, wasn't. So, I went on to Jellyfin's github, and dug deeper to find the code for that endpoint. It would call the provided URL without almost any checks (other than checking if it was already in cache). I had found an unknown vulnerability on the Software.</p>
+<p>More or less at the same time, Hydragyrum on Discord was poking at the same API, and after seeing him talk about SSRF on Jellyfin I knew he had found the same thing I did. We got in touch and decided we would work on responsible vulnerability disclosure together for this once we finished the room.</p>
+<p>Eventually both me and Hydra finished the room, after realizing Jellyfin wasn't the way forward, it was only a matter of time until we got a back to Monitorr and found the normal foothold, and from there the root was only a matter of propper Enumeration.</p>
+<h2>Proof of Concept and Responsible Disclosure</h2>
+<p>Hydragyrum is another Community Mentor at THM, and someone who has some experience with dockers, which will become relevant in a bit. I spent a day talking to him about the implications of our finding. While doing this we realized the problem of unauthenticated requests on this endpoint wasn't fully new to the organization:</p>
+<p>An <a href="https://github.com/jellyfin/jellyfin/issues/5415">issue on the jellyfin repository</a> had originally mentioned it:</p>
+<blockquote>
+<p>All (raw) image endpoints in ImageByNameController, ImageController &amp; RemoteImageController are unauthenticated<br>
+    This allows probing on whether a specific image exists on the server by guessing item id's (which can maybe done without too much trouble, as I believe item id's are just some MD5 hash? To be confirmed) and then checking on what content (movies, series etc) exist on a given server, without having an account.</p>
+</blockquote>
+<p>However, this failed to recognize the majority of security implications of endpoint's behavior. It went a lot further than leaking images based on IDs. They were clearly aware they had problems with the endpoint, however we felt it necessary to inform Jellyfin more accurately of the implications of this problem.</p>
+<p>The next day Hydra assembled a quick docker compose with Jellyfin and an internal Nginx server as well. With that in place, he also created a quick proof of concept, demonstrating not only that we could reach internal resources - in this case the Nginx server - but also do port scanning of the internal network. We only had GET HTTP(S) access without cookies but it was enough to do a lot of internal network recon, and to leak internal resources.</p>
+<p>I wrote an email to Jellyfin explaining everything it could do and packaged our docker-compose, an HTTP request demonstrating access to internal resources, and a short python script that could perform port and IP scanning. It wasn't pretty, but it worked, and demonstrated the problem really well.</p>
+<p>Within a week they had replied, and only a couple of days later a fix was deployed. Additionally, knowing their code base better than us, the Jellyfin maintainers were able to find a few other endpoints that also contributed to this problem. They ended up removing the affected endpoints all together. A <a href="https://github.com/jellyfin/jellyfin/security/advisories/GHSA-rgjw-4fwc-9v96">security advisory</a> as well as <a href="https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2021-29490">CVE-2021-29490</a> (currently awaiting analysis) were published, letting everyone know what the problem was and what version patched it.</p>
+<p>All in all, I started trying to root a box. Fell into a deep rabbit hole, but ended up applying some Bug Bounty Hunting skills and came out the other side a better hacker, having found a vulnerability where there shouldn't have been one. I often say that failure tends to teach us more than success, but this time failure had turned into success. It may not have been a fast boot-to-root, but in its own way it had felt a lot sweeter.</p>
+<p>In the process I'd like to think I helped make Jellyfin a bit safer for their users.</p>
+  </div>
+  <div class="tag-cloud">
+    <p>
+      <a href="/tag/rants.html">rants</a>
+      <a href="/tag/cve.html">cve</a>
+      <a href="/tag/cve-2021-29490.html">CVE-2021-29490</a>
+      <a href="/tag/jellyfin.html">jellyfin</a>
+      <a href="/tag/vulnerability.html">vulnerability</a>
+      <a href="/tag/tryhackme.html">tryhackme</a>
+    </p>
+  </div>
+
+
+
+
+
+</article>
+
+    <footer>
+<p>&copy;  </p>
+<p>
+Built with <a href="http://getpelican.com" target="_blank">Pelican</a> using a modified <a href="http://bit.ly/flex-pelican" target="_blank">Flex</a> theme
+</p>
+<div class="badge">
+  <script src="https://tryhackme.com/badge/127811"></script>
+</div>    </footer>
+  </main>
+
+
+
+
+<script type="application/ld+json">
+{
+  "@context" : "http://schema.org",
+  "@type" : "Blog",
+  "name": " OmegaVoid - Blog of Many Things ",
+  "url" : "",
+  "image": "https://omega-void.github.io/images/OV.png",
+  "description": ""
+}
+</script>
+
+
+</body>
+</html>
