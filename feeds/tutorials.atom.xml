@@ -79,7 +79,7 @@
 &lt;p&gt;Modern OSs have protection mechanisms like ASLR (Address Space Layout Randomization) which randomly arranges the address space positions of the stack, heap and libraries making exploitation harder. In fact, its a big part of why buffer overflow exploits generate a large number of crash errors in the logs.&lt;br&gt;If you'd like to know more: &lt;a href="https://github.com/r0hi7/BinExp/"&gt;r0hi7's github&lt;/a&gt; is a great source of information on this, and also how to defeat it.&lt;/p&gt;
 &lt;/blockquote&gt;
 &lt;h1&gt;Practice&lt;/h1&gt;
-&lt;p&gt;Ok, we know how this "should work" but let's actually do it. We'll go ahead and use OVERFLOW 4 on (LINK) to exemplify things.&lt;/p&gt;
+&lt;p&gt;Ok, we know how this "should work" but let's actually do it. We'll go ahead and use OVERFLOW 4 on &lt;a href="https://tryhackme.com/room/bufferoverflowprep"&gt;Buffer Overflow Prep&lt;/a&gt; to exemplify things.&lt;/p&gt;
 &lt;p&gt;Our process will take the following steps:&lt;/p&gt;
 &lt;ol&gt;
 &lt;li&gt;Writing code to interact with the Application and Fuzzing&lt;/li&gt;
