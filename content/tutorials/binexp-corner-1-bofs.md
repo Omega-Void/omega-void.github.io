@@ -110,7 +110,7 @@ All we have to do is get EIP to point at an address that has the instruction JMP
 
 # Practice
 
-Ok, we know how this "should work" but let's actually do it. We'll go ahead and use OVERFLOW 4 on (LINK) to exemplify things.
+Ok, we know how this "should work" but let's actually do it. We'll go ahead and use OVERFLOW 4 on [Buffer Overflow Prep](https://tryhackme.com/room/bufferoverflowprep) to exemplify things.
 
 Our process will take the following steps:
 
