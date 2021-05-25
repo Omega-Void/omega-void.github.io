@@ -46,14 +46,14 @@ I went to page 8096, and was greeted by a login page.
 
 ![Jellyfin Login Page](/images/jellyfish/jellyfin-login.png)
 
-Except I didn't have a user or a password. Trying to recover the password, I get a message that I have to be "at home" to be able to do password recovery. Ok. So that's something, Lucky for me, I was able to leak the IP from the internal THM network via one of the requests that the browser makes when accessing JellyFin. So connected to that internal IP via the THM OpenVPN, rather than going through the public IP. This gave me the ability to attack a bit faster and be a bit less worried about what my traffic was looking like to my ISP.
+Except I didn't have a user or a password. Trying to recover the password, I get a message that I have to be "at home" to be able to do password recovery. Ok. So that's something, Lucky for me, I was able to leak the IP from the internal THM network via one of the requests that the browser makes when accessing Jellyfin. So connected to that internal IP via the THM OpenVPN, rather than going through the public IP. This gave me the ability to attack a bit faster and be a bit less worried about what my traffic was looking like to my ISP.
 
 Once connected via the THM VPN I tried to recover the password for the user 'robyn' (since it's featured in the URL domain). I get the following message.
 
 ![Jellyfin Password Recovery PIN message](/images/jellyfish/pin.png)
 
 And a lightbulb turns on in my head. Maybe I can find a way to to leak that pin, use that to get access to upload a file and somehow get a reverse shell that way.
-I searched around a bit and found: [CVE-2021-21402](https://nvd.nist.gov/vuln/detail/CVE-2021-21402) which made me think, that's exactly the kind of thing I need to open the file that has the pin. Except one problem, this affects JellyFin before version 10.7.1, and we had version 10.7.2. Once again, Muiri likes to patch vulnerabilities. Plus, by all signs on your port scan, this was a Linux host.
+I searched around a bit and found: [CVE-2021-21402](https://nvd.nist.gov/vuln/detail/CVE-2021-21402) which made me think, that's exactly the kind of thing I need to open the file that has the pin. Except one problem, this affects Jellyfin before version 10.7.1, and we had version 10.7.2. Once again, Muiri likes to patch vulnerabilities. Plus, by all signs on your port scan, this was a Linux host.
 
 The running joke at this time on the discord was to offer only "ENUMERATE" to anyone who asked for a hint. So I decided to take that a bit literally and start using a bit of bug hunting methodology and start enumerating all of the Jellyfin API.
 
