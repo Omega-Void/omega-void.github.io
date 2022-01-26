@@ -118,7 +118,7 @@
       
     <h1 id="down-the-jellyfish-hole">Down the Jellyfish Hole</h1>
     <p>
-      Posted on qui 06 maio 2021 in <a href="/category/rants.html">Rants</a>
+      Posted on Thu 06 May 2021 in <a href="/category/rants.html">Rants</a>
 
     </p>
   </header>
@@ -133,18 +133,18 @@
 <p>I decided I would go deep into this machine and try hard, not because of the prize (I ended up signing up for OSCP anyways afterwards), but more because Muirland promised a realistic machine, and an OSCP-like (in terms of dificulty and ammount of possible rabbit holes in the machine). Additionally, the atmosphere created in the TryHackMe discord became quite positive and fun, so I ended up spending quite a lot of time with this machine. Plus I enjoy Muirland's rooms quite a bit they tend to push me to try harder.</p>
 <p>This machine had a few peculiarities, including having a public IP, which meant that I ended up opting to deploy a VPS for the inital enumeration. The machine was somewhat realistically put together with a few Vhosts and several services running on the machine. It was made to look like something someone would host on their basement, with a small business website, a server monitor and a Media server. The only thing that really seemed strange to me in that regard, was seeing an ssh honeypot on the machine.</p>
 <p>Without going into too much detail, here's more or less what it looked like.</p>
-<div class="highlight"><pre><span></span><code><span class="err">1. Domanin and Vhosts</span>
-<span class="err">    a) robyns-petshop.thm</span>
-<span class="err">    b) monitorr.robyns-petshop.thm</span>
-<span class="err">    c) beta.robyns-petshop.thm</span>
-<span class="err">    d) dev.robyns-petshop.thm</span>
-<span class="err">2. Ports</span>
-<span class="err">    - 22 - OpenSSH 5.9p1 Debian 5ubuntu1.4</span>
-<span class="err">    - 80 - Apache httpd 2.4.29 - Robyn&#39;s Petshop (redirects to 443)</span>
-<span class="err">    - 443 - Apache httpd 2.4.29 - Robyn&#39;s Petshop</span>
-<span class="err">    - 8000 - http - Under Development</span>
-<span class="err">    - 8096 - http - Kestrel - Jellyfin</span>
-<span class="err">    - 22222 - OpenSSH 7.6p1 Ubuntu 4ubuntu0.3 </span>
+<div class="highlight"><pre><span></span><code><span class="mf">1.</span><span class="w"> </span><span class="n">Domanin</span><span class="w"> </span><span class="ow">and</span><span class="w"> </span><span class="n">Vhosts</span><span class="w"></span>
+<span class="w">    </span><span class="n">a</span><span class="p">)</span><span class="w"> </span><span class="n">robyns</span><span class="o">-</span><span class="n">petshop</span><span class="mf">.</span><span class="n">thm</span><span class="w"></span>
+<span class="w">    </span><span class="n">b</span><span class="p">)</span><span class="w"> </span><span class="n">monitorr</span><span class="mf">.</span><span class="n">robyns</span><span class="o">-</span><span class="n">petshop</span><span class="mf">.</span><span class="n">thm</span><span class="w"></span>
+<span class="w">    </span><span class="n">c</span><span class="p">)</span><span class="w"> </span><span class="n">beta</span><span class="mf">.</span><span class="n">robyns</span><span class="o">-</span><span class="n">petshop</span><span class="mf">.</span><span class="n">thm</span><span class="w"></span>
+<span class="w">    </span><span class="n">d</span><span class="p">)</span><span class="w"> </span><span class="n">dev</span><span class="mf">.</span><span class="n">robyns</span><span class="o">-</span><span class="n">petshop</span><span class="mf">.</span><span class="n">thm</span><span class="w"></span>
+<span class="mf">2.</span><span class="w"> </span><span class="n">Ports</span><span class="w"></span>
+<span class="w">    </span><span class="o">-</span><span class="w"> </span><span class="mf">22</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="kr">Open</span><span class="n">SSH</span><span class="w"> </span><span class="mf">5.9</span><span class="n">p1</span><span class="w"> </span><span class="n">Debian</span><span class="w"> </span><span class="mf">5</span><span class="n">ubuntu1</span><span class="mf">.4</span><span class="w"></span>
+<span class="w">    </span><span class="o">-</span><span class="w"> </span><span class="mf">80</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">Apache</span><span class="w"> </span><span class="n">httpd</span><span class="w"> </span><span class="mf">2.4.29</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">Robyn</span><span class="err">&#39;</span><span class="n">s</span><span class="w"> </span><span class="n">Petshop</span><span class="w"> </span><span class="p">(</span><span class="n">redirects</span><span class="w"> </span><span class="kr">to</span><span class="w"> </span><span class="mf">443</span><span class="p">)</span><span class="w"></span>
+<span class="w">    </span><span class="o">-</span><span class="w"> </span><span class="mf">443</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">Apache</span><span class="w"> </span><span class="n">httpd</span><span class="w"> </span><span class="mf">2.4.29</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">Robyn</span><span class="err">&#39;</span><span class="n">s</span><span class="w"> </span><span class="n">Petshop</span><span class="w"></span>
+<span class="w">    </span><span class="o">-</span><span class="w"> </span><span class="mf">8000</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">http</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">Under</span><span class="w"> </span><span class="n">Development</span><span class="w"></span>
+<span class="w">    </span><span class="o">-</span><span class="w"> </span><span class="mf">8096</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">http</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">Kestrel</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">Jellyfin</span><span class="w"></span>
+<span class="w">    </span><span class="o">-</span><span class="w"> </span><span class="mf">22222</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="kr">Open</span><span class="n">SSH</span><span class="w"> </span><span class="mf">7.6</span><span class="n">p1</span><span class="w"> </span><span class="n">Ubuntu</span><span class="w"> </span><span class="mf">4</span><span class="n">ubuntu0</span><span class="mf">.3</span><span class="w"> </span>
 </code></pre></div>
 
 <p>Before I went deep into the services hosted on the ports I decided to have a quick look at the vhosts. Beta and dev seemed to be replicating some of the other ports (and I couldn't find any exploitable differences). Monitorr seemed interesting, it was a service monitor solution, it had a login, and the version on the machine had a known <a href="https://nvd.nist.gov/vuln/detail/CVE-2020-28871">upload vulnerability that could lead to RCE</a>. However, testing it out initially I was unable to exploit it, as it seemed Muir had patched it - it would not allow an upload even if we gave the endpoint what seemed valid upload content.</p>
