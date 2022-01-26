@@ -5,7 +5,7 @@ Modified: 2022-01-26 12:29
 I'm OmegaVoid. I'm a scientist, a farmer and an infosec enthusiast.
 I plant things by day, hack things by night.
 
-I'm all about ethical hacking and information security. Obtained my OSCP certification in 2021, and am currently focusing on learning more about cloud technologies.
+I'm all about ethical hacking and information security. Obtained my OSCP certification in 2021, and am currently focusing on learning more about cloud technology and cloud security.
 
 My objective for 2022 is continuing to work hard to try and land a job in the industry, so I can have an actual impact in the field.
 
