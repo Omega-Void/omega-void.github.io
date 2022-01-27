@@ -273,7 +273,7 @@ This JNDI exploit kit creates a nice list of URLs serving the payloads we can us
 &lt;p&gt;&lt;img alt="Bob is a member the docker group." src="/images/shaker/docker-group.png"&gt;&lt;/p&gt;
 &lt;p&gt;Bob seems to be a member of the docker group, and docker socket is writable:&lt;/p&gt;
 &lt;p&gt;&lt;img alt="Writable Docker Socket." src="/images/shaker/docker-socket.png"&gt;&lt;/p&gt;
-&lt;p&gt;That's all we need to know we obtain root privileges on this machine.&lt;/p&gt;
+&lt;p&gt;That's all we need to know we can obtain root privileges on this machine.&lt;/p&gt;
 &lt;p&gt;&lt;img alt="Docker Containers and Images." src="/images/shaker/containers-images.png"&gt;&lt;/p&gt;
 &lt;p&gt;We can see the shaker container and its image in the docker repository.&lt;/p&gt;
 &lt;p&gt;But we also know this image is severely limited. So instead we'll make our own.&lt;/p&gt;
