@@ -422,7 +422,7 @@ Bob seems to be a member of the docker group, and docker socket is writable:
 
 ![Writable Docker Socket.](/images/shaker/docker-socket.png)
 
-That's all we need to know we obtain root privileges on this machine.
+That's all we need to know we can obtain root privileges on this machine.
 
 ![Docker Containers and Images.](/images/shaker/containers-images.png)
 
