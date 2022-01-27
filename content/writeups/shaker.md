@@ -182,7 +182,7 @@ To check if we have RCE, we start tcp dump and look for pings:
 sudo tcpdump -i tun0 icmp
 ```
 
-And finally whttps://github.com/jpillora/chisele upload our payload:
+And finally we upload our payload:
 
 ```xml
 <?xml version="1.0"?>
