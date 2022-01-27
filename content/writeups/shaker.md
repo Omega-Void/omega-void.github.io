@@ -199,7 +199,7 @@ The author probably removed what he considered unnecessary binaries from contain
 
 You don't have curl? Java can download for you. You don't have chmod? Java can change file permissions for you. We can take this as far as we want. However, if we're going to create a file, we have to deploy it somewhere we know we have permissions to.
 
-I tried /tmp/ at first but was unable to exploit, which means Hydragyrum probably hardened that as well. But we know exactly where we can create a file in the filesystem. the application uploads folder.
+I tried /tmp/ at first but was unable to exploit, which means Hydragyrum probably hardened that as well. But we know exactly where we can create a file in the filesystem. The application's uploads folder.
 
 So let's check the context of the application:
 
