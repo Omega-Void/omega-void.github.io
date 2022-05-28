@@ -76,6 +76,7 @@ Patience, young grasshopper, we'll get there. But to do so we'll need to underst
 Here we'll do a quick overview of process memory, there is more to this but it should give you some insight into how memory addresses are used by a process.
 
 From the bottom to the top:
+
 - Process Image - This section encompasses the Text, Data, and BSS sections.
     1. Text - Read only section with executable instructions, constants, and macros
     2. Data - Global and Static variables
@@ -103,6 +104,7 @@ There are quite a lot of registers to look at depending on the architecture we'r
 
 Finally, there's also the Flags register which may be `RFLAGS` (64bit), `EFLAGS` (32bit) or just `FLAGS` (16bit).
 This register is special, in that each of its bits represents a boolean (true or false) value. Combined, the bits in the `FLAGS` register represent the state of the processor and the result of operations. A few examples:
+
 - CF - Carry Flag - Set to 1 when the result of an operation is too large for the destination operand
 - ZF - Zero Flag - Set to 1 when the result of an operation is equal to zero (used in comparisons and jumps)
 - SF - Sign Flag - Set if the result of an operation is negative
@@ -184,6 +186,7 @@ Woah woah.. hold on, you didn't say anything about QWORD, what is that?
 Ok. Ok. Hold on, I'm getting there.
 
 If we did `mov rdi, [rip+0x2f16]`, how would we know how much we would copy from memory. We could take a guess based on the size rip can hold (AT&T syntax can be used like that), but in Intel syntax we are explicit about how much memory we're copying starting at that address:
+
 - Byte - 8 bits
 - Word - 16 bits or 2 bytes
 - Dword - 32 bits or 4 bytes
