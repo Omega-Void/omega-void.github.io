@@ -274,4 +274,4 @@ Additionally, we only covered x64 and x32 bit architectures, there are also othe
 Hope you enjoyed, if you did, dive deep and have fun.
 
 
-
+You can grab the PDF of the presentation slides [here](/images/binexp-corner-2/BinExpCorner2.pdf).
