@@ -163,13 +163,17 @@ Here we see an example of a call made to <code>libssh2.so</code> when running a 
 <h3>Structure of a Process in Memory</h3>
 <p><img alt="representation of process memory" src="/images/binexp-corner-2/pmem.png"></p>
 <p>Here we'll do a quick overview of process memory, there is more to this but it should give you some insight into how memory addresses are used by a process.</p>
-<p>From the bottom to the top:
-- Process Image - This section encompasses the Text, Data, and BSS sections.
-    1. Text - Read only section with executable instructions, constants, and macros
-    2. Data - Global and Static variables
-    3. BSS - "Block start by symbol" is memory space for uninitialized static variables
-- Heap - This is a section of memory that grows from lower addresses to higher addresses, and is dynamically allocated during process runtime. It is managed by functions like malloc() etc.
-- Stack - This section of memory grows from higher addresses to lower addresses, and holds stack frames, which are frames created during execution time to hold function return addresses, local function arguments, and variables.</p>
+<p>From the bottom to the top:</p>
+<ul>
+<li>Process Image - This section encompasses the Text, Data, and BSS sections.<ol>
+<li>Text - Read only section with executable instructions, constants, and macros</li>
+<li>Data - Global and Static variables</li>
+<li>BSS - "Block start by symbol" is memory space for uninitialized static variables</li>
+</ol>
+</li>
+<li>Heap - This is a section of memory that grows from lower addresses to higher addresses, and is dynamically allocated during process runtime. It is managed by functions like malloc() etc.</li>
+<li>Stack - This section of memory grows from higher addresses to lower addresses, and holds stack frames, which are frames created during execution time to hold function return addresses, local function arguments, and variables.</li>
+</ul>
 <h3>CPU Registers</h3>
 <p>CPU Registers are very very small, very very fast data storage sites in the processor. Each register has a specific function which will depend on CPU architecture and the calling convention being used.</p>
 <p>Let's take a look at a very simple example, the Accumulator. In x86 this is the <code>EAX</code>, and it is 32 bits, however, we can access the lower 16 bits via the register <code>AX</code>. And finally, that lower register is composed by the higher 8 bits (the <code>AH</code> register) and the lower 8 bits (the <code>AL</code> register). </p>
@@ -180,11 +184,13 @@ Here we see an example of a call made to <code>libssh2.so</code> when running a 
 <p>There are quite a lot of registers to look at depending on the architecture we're dealing with, but a few to remember:</p>
 <p><img alt="Registers to remember" src="/images/binexp-corner-2/Registers4.png"></p>
 <p>Finally, there's also the Flags register which may be <code>RFLAGS</code> (64bit), <code>EFLAGS</code> (32bit) or just <code>FLAGS</code> (16bit).
-This register is special, in that each of its bits represents a boolean (true or false) value. Combined, the bits in the <code>FLAGS</code> register represent the state of the processor and the result of operations. A few examples:
-- CF - Carry Flag - Set to 1 when the result of an operation is too large for the destination operand
-- ZF - Zero Flag - Set to 1 when the result of an operation is equal to zero (used in comparisons and jumps)
-- SF - Sign Flag - Set if the result of an operation is negative
-- TP - Trap Flag - Set when in debugger mode (step-by-step execution)</p>
+This register is special, in that each of its bits represents a boolean (true or false) value. Combined, the bits in the <code>FLAGS</code> register represent the state of the processor and the result of operations. A few examples:</p>
+<ul>
+<li>CF - Carry Flag - Set to 1 when the result of an operation is too large for the destination operand</li>
+<li>ZF - Zero Flag - Set to 1 when the result of an operation is equal to zero (used in comparisons and jumps)</li>
+<li>SF - Sign Flag - Set if the result of an operation is negative</li>
+<li>TP - Trap Flag - Set when in debugger mode (step-by-step execution)</li>
+</ul>
 <p>The Trap flag is often used by malware to avoid being analyzed, based on its value it can trigger the execution to stop, change behaviour to pretend not to be malicious, or even to delete itself.</p>
 <h3>Endianness</h3>
 <p>Different architectures may represent a multibyte value in different ways. Big-Endian systems represent the most significant byte at the lowest memory address, and little-endian systems do the opposite.</p>
@@ -243,11 +249,13 @@ Therefore <code>mov ah, 0x01</code> moves the value <code>0x01</code> to the AH 
 To move that value to rdi we might use: <code>mov rdi, QWORD [rip+0x2f16]</code></p>
 <p>Woah woah.. hold on, you didn't say anything about QWORD, what is that?
 Ok. Ok. Hold on, I'm getting there.</p>
-<p>If we did <code>mov rdi, [rip+0x2f16]</code>, how would we know how much we would copy from memory. We could take a guess based on the size rip can hold (AT&amp;T syntax can be used like that), but in Intel syntax we are explicit about how much memory we're copying starting at that address:
-- Byte - 8 bits
-- Word - 16 bits or 2 bytes
-- Dword - 32 bits or 4 bytes
-- Qword - 64 bits or 8 bytes</p>
+<p>If we did <code>mov rdi, [rip+0x2f16]</code>, how would we know how much we would copy from memory. We could take a guess based on the size rip can hold (AT&amp;T syntax can be used like that), but in Intel syntax we are explicit about how much memory we're copying starting at that address:</p>
+<ul>
+<li>Byte - 8 bits</li>
+<li>Word - 16 bits or 2 bytes</li>
+<li>Dword - 32 bits or 4 bytes</li>
+<li>Qword - 64 bits or 8 bytes</li>
+</ul>
 <p>Ok. How about instructions? Well, there are a lot of them depending on your specific CPU instruction set.
 A few to remember:</p>
 <p><img alt="Examples of assembly instructions" src="/images/binexp-corner-2/Instructions.png"></p>
