@@ -125,14 +125,14 @@
   <div>
     <p>It has been a while since I've done an Episode for the BinExp corner. Since we're finally able to explore it a bit further I decided to take a look at beginner level binary exploration and start taking a look at figuring out what an unknown binary does. This serves as a primer for future, perhaps more interesting, episodes to come where we'll cover many avenues of exploitation. I'm going to strive to keep this concise but we have a lot to cover, so bear with me as this will be packed with information, tools, and links to other resources if you want to go deeper into the topic. Also, this post is reading support for a talk done on the TryHackMe Twitch account.</p>
 <blockquote>
-<p>Disclaimer: This post is not oriented towards malware analysis, so don't immediately apply what you see here to malicious samples as we will not cover how to setup a safe enviroment to minimize risk. If you do so, you will most likely get infected.</p>
+<p>Disclaimer: This post is not oriented towards malware analysis, so don't immediately apply what you see here to malicious samples as we will not cover how to setup a safe environment to minimize risk. If you do so, you will most likely get infected.</p>
 </blockquote>
-<p>We will make use of examples from <a href="https://www.tryhackme.com/">TryHackMe</a> to demonstrate a few of the things we see in binaries, but it's worthwhile to also mention another extremely valuable resource which is guyinatuxedo's <a href="https://github.com/guyinatuxedo/nightmare">Nightmare</a>. Nightmare approaches teaching binary exploration and exploitation via past, publicly available CTF challenges. We will make references to this resource a few times throught this talk.</p>
+<p>We will make use of examples from <a href="https://www.tryhackme.com/">TryHackMe</a> to demonstrate a few of the things we see in binaries, but it's worthwhile to also mention another extremely valuable resource which is guyinatuxedo's <a href="https://github.com/guyinatuxedo/nightmare">Nightmare</a>. Nightmare approaches teaching binary exploration and exploitation via past, publicly available CTF challenges. We will make references to this resource a few times throughout this talk.</p>
 <p>So, let's get started.</p>
 <h2>Static vs Dynamic Analysis</h2>
 <p>Before we get into the deep end it's important to distinguish these two terms.
 - Static Analysis - Examining code and artifacts (strings, headers, etc) of a binary to understand what it does without executing it.
-- Dynamic Analysis - Analysis of application during runtime, looking at memory and cpu register changes while it executes.</p>
+- Dynamic Analysis - Analysis of application during runtime, looking at memory and CPU registers changes while it executes.</p>
 <p>This difference in analysis can pose an enormous challenge when looking at something that performs decryption and memory allocation of program instructions at runtime. This is a tactic often used by malware to hide what it's doing from static analysis.</p>
 <h2>First Steps into Static Analysis</h2>
 <p>My go-tos when starting binary analysis are typically going to be the commands <code>file</code> and <code>strings</code>.</p>
@@ -141,38 +141,38 @@
 <p>However, things can go wrong:</p>
 <p><img alt="file command failing to recognize the file details." src="/images/binexp-corner-2/file2.png"></p>
 <p>This is an example from the THM room 0x41haz. You can see that file doesn't know what it's looking at, meaning it failed some tests.
-This could be done purposefully to try and detter analysis by manipulating the 'magic numbers' in the headers of the file.
-However, this can be fixed with hexeditor by changing these numbers to something that makes sense. However this will require some research, experience, or at least some educated guesses about what the binary might actually be.</p>
+This could be done purposefully to try and deter analysis by manipulating the 'magic numbers' in the headers of the file.
+However, this can be fixed with hexeditor by changing these numbers to something that makes sense. However, this will require some research, experience, or at least some educated guesses about what the binary might actually be.</p>
 <p><code>strings</code> is another really useful command to run, as it'll print out any sequence of printable characters that is at least 4 characters long (or set the minimum char length with <code>-n</code>).</p>
 <p><img alt="Strings showing some insight into the what the binary does" src="/images/binexp-corner-2/strings1.png"></p>
 <p>This can often give us some idea of what the program is doing without executing it (above we can see it's asking for the password, and then checking it to see if is correct), it might give us an idea of what libraries are being used, and may leak valuable strings (passwords, secrets), or give us insight into encodings or cryptography being used in the binary.</p>
-<p>We're mostly looking at linux in this post, but it is worth mentioning that if you're looking at Windows Portable Executables (PE), it is worth analysing the headers with something like <code>pecheck</code>from <a href="https://github.com/DidierStevens/DidierStevensSuite">DidierStevens</a>. This will bear a lot of information about the Windows PE you're analysing, and falls in line with these first few steps.</p>
-<p>Another thing worth mention is <code>ldd</code> which stands for List Dynamic Dependencies, which as you can see will list the libraries the binary depends on:</p>
+<p>We're mostly looking at linux in this post, but it is worth mentioning that if you're looking at Windows Portable Executables (PE), it is worth analyzing the headers with something like <code>pecheck</code>from <a href="https://github.com/DidierStevens/DidierStevensSuite">DidierStevens</a>. This will bear a lot of information about the Windows PE you're analyzing, and falls in line with these first few steps.</p>
+<p>Another thing worth mentioning is <code>ldd</code> which stands for List Dynamic Dependencies, which as you can see will list the libraries the binary depends on:</p>
 <p><img alt="ldd showing libraries required by nmap" src="/images/binexp-corner-2/ldd.png"></p>
 <p>For instance, here we can see nmap relies on libssh2 and libcrypto for some of the things it does.</p>
 <h2>Dynamic Analysis</h2>
-<p>Without knowing a whole bunch about assembly there's also a few steps we can take into dynamic analysis. Namely <code>strace</code> and <code>ltrace</code>.
+<p>Without knowing a whole bunch about assembly there are also a few steps we can take into dynamic analysis. Namely <code>strace</code> and <code>ltrace</code>.
 These two commands are rather similar, with <code>strace</code> listing all the system calls made by a process during execution, and <code>ltrace</code> being sometimes a bit more useful as it also lists dynamic library calls. Two examples with <code>ltrace</code>:</p>
 <p><img alt="ltrace showing system calls" src="/images/binexp-corner-2/ltrace1.png"></p>
-<p>Here we see system calls made by <code>nmap</code>, we can see it accessing <code>/etc/ld.so.preload</code>, a number of calls the mmap function, etc.</p>
+<p>Here we see system calls made by <code>nmap</code>, we can see it accessing <code>/etc/ld.so.preload</code>, and a number of calls to the mmap function, etc.</p>
 <p><img alt="ltrace showing calls to libssh2.so" src="/images/binexp-corner-2/ltrace2.png">
-Here we see a an example of a call made to <code>libssh2.so</code> when running a nmap vuln scripts on port 22. We get the libssh2 init call, and the arguments passed to the function.</p>
+Here we see an example of a call made to <code>libssh2.so</code> when running a nmap vuln scripts on port 22. We get the libssh2 init call, and the arguments passed to the function.</p>
 <h2>Memory, CPU and Assembly</h2>
-<p>Ok, we understand what static and dynamic analysis are. But we still barely scratched the surface. How do we get the code that's actually running on the binary. How do understand exactly what it's doing.</p>
+<p>Ok, we understand what static and dynamic analysis are. But we still barely scratched the surface. How do we get the code that's actually running on the binary? How do we understand exactly what it's doing?</p>
 <p>Patience, young grasshopper, we'll get there. But to do so we'll need to understand a bit about Process Memory, CPU Registers and Assembly. So bear with me this is going to be a little dense, but I promise it's worth it.</p>
 <h3>Structure of a Process in Memory</h3>
 <p><img alt="representation of process memory" src="/images/binexp-corner-2/pmem.png"></p>
-<p>Here we'll do quick overview of process memory, there is more to this but it should give you some insight into how memory addresses are used by a process.</p>
+<p>Here we'll do a quick overview of process memory, there is more to this but it should give you some insight into how memory addresses are used by a process.</p>
 <p>From the bottom to the top:
-- Process Image - This section encompasses the Text, Data and BSS sections.
-    1. Text - Read only section with executable instructions, constants and macros
+- Process Image - This section encompasses the Text, Data, and BSS sections.
+    1. Text - Read only section with executable instructions, constants, and macros
     2. Data - Global and Static variables
     3. BSS - "Block start by symbol" is memory space for uninitialized static variables
 - Heap - This is a section of memory that grows from lower addresses to higher addresses, and is dynamically allocated during process runtime. It is managed by functions like malloc() etc.
-- Stack - This section of memory grows from higher addresses to lower addresses, and holds stack frames, which are frames created during execution time to hold function return addresses, local function arguments and variables.</p>
+- Stack - This section of memory grows from higher addresses to lower addresses, and holds stack frames, which are frames created during execution time to hold function return addresses, local function arguments, and variables.</p>
 <h3>CPU Registers</h3>
 <p>CPU Registers are very very small, very very fast data storage sites in the processor. Each register has a specific function which will depend on CPU architecture and the calling convention being used.</p>
-<p>Let's take a look at a very simple example, the Accumulator. In x86 this is the <code>EAX</code>, and it is 32 bits, however, we can access the lower 16 bits via the register <code>AX</code>. And finally that lower register is composed by the higher 8 bits (the <code>AH</code> register) and the lower 8 bits (the <code>AL</code> register). </p>
+<p>Let's take a look at a very simple example, the Accumulator. In x86 this is the <code>EAX</code>, and it is 32 bits, however, we can access the lower 16 bits via the register <code>AX</code>. And finally, that lower register is composed by the higher 8 bits (the <code>AH</code> register) and the lower 8 bits (the <code>AL</code> register). </p>
 <p><img alt="EAX and AX registers" src="/images/binexp-corner-2/Registers1.png"></p>
 <p><img alt="EAX AH and AL registers" src="/images/binexp-corner-2/Registers2.png"></p>
 <p>x64, in essence, extends 32bit architecture to deal with 64bit values and addresses. Therefore the x64 architecture extends the 32bit accumulator with RAX which is 64bits.</p>
@@ -182,20 +182,20 @@ Here we see a an example of a call made to <code>libssh2.so</code> when running 
 <p>Finally, there's also the Flags register which may be <code>RFLAGS</code> (64bit), <code>EFLAGS</code> (32bit) or just <code>FLAGS</code> (16bit).
 This register is special, in that each of its bits represents a boolean (true or false) value. Combined, the bits in the <code>FLAGS</code> register represent the state of the processor and the result of operations. A few examples:
 - CF - Carry Flag - Set to 1 when the result of an operation is too large for the destination operand
-- ZF - Zero Flag - Set to 1 when the result of an operation is equal to zero (used in comparissons and jumps)
+- ZF - Zero Flag - Set to 1 when the result of an operation is equal to zero (used in comparisons and jumps)
 - SF - Sign Flag - Set if the result of an operation is negative
-- TP - Trap Flag - Set when in debbugger mode (step-by-step execution)</p>
-<p>The Trap flag is often used by malware to avoid being analyzed, and can use it to trigger execution to stop, to pretend not to be malicious, or even to delete itself.</p>
+- TP - Trap Flag - Set when in debugger mode (step-by-step execution)</p>
+<p>The Trap flag is often used by malware to avoid being analyzed, based on its value it can trigger the execution to stop, change behaviour to pretend not to be malicious, or even to delete itself.</p>
 <h3>Endianness</h3>
 <p>Different architectures may represent a multibyte value in different ways. Big-Endian systems represent the most significant byte at the lowest memory address, and little-endian systems do the opposite.</p>
 <p><img alt="deadbeef in little endian and big endian" src="/images/binexp-corner-2/endianness.png"></p>
 <p>This is not typically a problem that programs typically have to deal with, as they always operate with the same type of endianness. However, if we're going to manipulate memory addresses, or read values from memory we need to be aware, and do the necessary transformations to obtain the correct values.</p>
 <h3>A note on Calling Conventions</h3>
-<p>In the interest of keeping this somewhat short I'm going to only mention that there are multiple calling conventions (3 in x64 and 5 common conventions in x86).
+<p>In the interest of keeping this somewhat short, I'm going to only mention that there are multiple calling conventions (3 in x64 and 5 common conventions in x86).
 These deal with how values are stored in registers or in the stack when calling a function. This is important, as we'll see these values being put either in the stack or those registers before a function is called. Explaining these conventions by itself could take a whole lot of time, so I will instead link you to the <a href="https://en.wikipedia.org/wiki/X86_calling_conventions">wikipedia article</a> about them.</p>
 <p>You can typically find out what the calling convention is when you see the first call to a function.</p>
 <h3>Assembly</h3>
-<p>Ok, so we know how memory is organized, and how CPU registers work, but how do we actually tell the CPU to do things? The obvious answer, is programs. But there's an issue here.</p>
+<p>Ok, so we know how memory is organized, and how CPU registers work, but how do we actually tell the CPU to do things? The obvious answer is programs, take a look at the text section of the process memory. But there's an issue here.</p>
 <p>Take the high-level C Code:</p>
 <div class="highlight"><pre><span></span><code><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;stdio.h&gt;</span><span class="cp"></span>
 
@@ -220,7 +220,7 @@ That main function in bytecode (in hex representation here) looks like:</p>
 <span class="mf">90</span><span class="w"></span>
 </code></pre></div>
 
-<p>So we have two problems. On one hand, bytecode is not something easy for out human brains to interpret. On the other hand we can clearly see that a single instruction can correspond to multiple instructions in bytecode. So in order to understand bytecode we typically use a language that has a direct one-to-one relationship to the low-level bytecode used by machines, this is Assembly.</p>
+<p>So we have two problems. On one hand, bytecode is not something easy for our human brains to interpret. On the other hand we can clearly see that a single instruction can correspond to multiple instructions in bytecode. So in order to understand bytecode we typically use a language that has a direct one-to-one relationship to the low-level bytecode used by machines, this is Assembly.</p>
 <div class="highlight"><pre><span></span><code><span class="nf">push</span><span class="w">   </span><span class="no">rbp</span><span class="w"></span>
 <span class="nf">mov</span><span class="w">    </span><span class="no">rbp</span><span class="p">,</span><span class="no">rsp</span><span class="w"></span>
 <span class="nf">lea</span><span class="w">    </span><span class="no">rax</span><span class="p">,[</span><span class="no">rip</span><span class="err">+</span><span class="mi">0xec0</span><span class="p">]</span><span class="w"></span>
@@ -232,9 +232,9 @@ That main function in bytecode (in hex representation here) looks like:</p>
 <span class="no">nop</span><span class="w"></span>
 </code></pre></div>
 
-<p>Ok, this seems a bit easier to read, we can recognize soem of those registers, we see a call to puts. We're getting there. But how does this work.</p>
+<p>Ok, this seems a bit easier to read, we can recognize some of those registers, we see a call to puts. We're getting there. But how does this work.</p>
 <blockquote>
-<p>Note: On this section we'll use Intel syntax, but it's important to note that there is also AT&amp;T syntax, which is also widely used. There are plenty of resources out on the internet to learn AT&amp;T syntax.</p>
+<p>Note: In this section we'll use Intel syntax, but it's important to note that there is also AT&amp;T syntax, which is also widely used. There are plenty of resources out on the internet to learn AT&amp;T syntax.</p>
 </blockquote>
 <p>The first thing of note about Intel syntax is that it takes an <code>instruction destination, source</code> structure.
 Therefore <code>mov ah, 0x01</code> moves the value <code>0x01</code> to the AH register of the CPU.</p>
@@ -248,29 +248,29 @@ Ok. Ok. Hold on, I'm getting there.</p>
 - Word - 16 bits or 2 bytes
 - Dword - 32 bits or 4 bytes
 - Qword - 64 bits or 8 bytes</p>
-<p>Ok. How about instructions? Well, there's a lot of them depending on your specific CPU instruction set.
+<p>Ok. How about instructions? Well, there are a lot of them depending on your specific CPU instruction set.
 A few to remember:</p>
 <p><img alt="Examples of assembly instructions" src="/images/binexp-corner-2/Instructions.png"></p>
-<p>So, now that you have an idea of what's goin on, go take a look at Nightmare's repo and do the <a href="https://github.com/guyinatuxedo/nightmare/blob/master/modules/03-beginner_re/csaw18_x86tour_pt1/stage1.asm">CSAW!'18 stage1 challenge</a>. Read that and it'll give you a pretty good idea of what the different instructions and registers do. Get used to looking at assembly. TryHackMe's <a href="https://tryhackme.com/room/win64assembly">Windows x64 Assembly</a> room is also quite insightful into what we've covered so far.</p>
+<p>So, now that you have an idea of what's going on, go take a look at Nightmare's repo and do the <a href="https://github.com/guyinatuxedo/nightmare/blob/master/modules/03-beginner_re/csaw18_x86tour_pt1/stage1.asm">CSAW!'18 stage1 challenge</a>. Read that and it'll give you a pretty good idea of what the different instructions and registers do. Get used to looking at assembly. TryHackMe's <a href="https://tryhackme.com/room/win64assembly">Windows x64 Assembly</a> room is also quite insightful into what we've covered so far.</p>
 <p>Next you may want to take a look at what function calls, conditional and loops look like. For that you may want to do Nightmare's <a href="https://guyinatuxedo.github.io/01-intro_assembly/reversing_assembly/index.html">Reversing Assembly section</a> or TryHackMe's <a href="https://tryhackme.com/room/windowsreversingintro">Windows Reversing Intro</a> for a look at the windows side of things.</p>
 <h2>Stack Frames</h2>
-<p>On my talk I'll mention Stack frames and a bit about how they work. I have covered this extensively in my other post on <a href="https://www.omegavo.id/binexp-corner-1-bofs.html">buffer overflows</a>, so if you need to, please reference that.</p>
+<p>In my talk I mention Stack frames and a bit about how they work. I have covered this extensively in my other post on <a href="https://www.omegavo.id/binexp-corner-1-bofs.html">buffer overflows</a>, so if you need to, please reference that.</p>
 <h2>Tools and Examples</h2>
-<p>Ok on this section we'll take a look at a few tools and do a guided tour of a couple of them.</p>
+<p>Ok, on this section we'll take a look at a few tools and do a guided tour of a couple of them.</p>
 <h3>Disassemblers and Decompilers - Static Analysis</h3>
-<p>Disassemblers and Decompilers are some very central pieces of software for reverse engineering. They essentially allow us to read the bytecode as assembly, navigate through function calls and look at the flow of the program. Decompilers are an aditional bonus, which will try to make sense of what the source code was based on the instructions. Two main disassemblers really stand out compared to the rest:</p>
+<p>Disassemblers and Decompilers are some very central pieces of software for reverse engineering. They essentially allow us to read the bytecode as assembly, navigate through function calls and look at the flow of the program. Decompilers are an additional bonus, which will try to make sense of what the source code was based on the instructions. Two main disassemblers really stand out compared to the rest:</p>
 <ul>
 <li>Hex Rays' IDA - The workhorse of the industry, which is very well established, has an excellent graph view and the latest freeware version even has a cloud based decompiler</li>
 <li>Ghidra - The more recent, open-source, developed by NSA software that comes with builtin decompiler and is extensible with python plugins.</li>
 </ul>
-<p>These are both excellent tools. And I will demo a bit of ghidra in my talk. If you want to know more, it has very extensive help documentation, and plenty of tutorial online. If you want to give it a spin in TryHackMe you cand o the <a href="https://tryhackme.com/room/ccghidra">CC: Ghidra</a> room.</p>
+<p>These are both excellent tools. And I will demo a bit of ghidra in my talk. If you want to know more, it has very extensive help documentation, and plenty of tutorial online. If you want to give it a spin in TryHackMe you can do the <a href="https://tryhackme.com/room/ccghidra">CC: Ghidra</a> room.</p>
 <h3>Debuggers - Dynamic Analysis</h3>
 <p>Debuggers on the other hand are all about dynamic analysis. Some can still perform static analysis (as we'll see) but their main advantage is being able to set breakpoints and look at memory and registers as we do step by step execution of a binary.</p>
-<p>In Windows two very commonly used debuggers are x32dbg (and x64dbg) and Immunity Debugger. Immunity Debugger is very outdated, but there's a few things it really excells at, partly because of corlean's mona plugin, which is great at assisting in binary exploitation.</p>
+<p>In Windows two very commonly used debuggers are x32dbg (and x64dbg) and Immunity Debugger. Immunity Debugger is very outdated, but there are a few things it really excells at, partly because of corlean's mona plugin, which is great at assisting in binary exploitation.</p>
 <p>In Linux, there are many options such as, gdb (with pwndbg, gef or other plugins), radare2 or rizin, for instance. It'll often be a matter of preference, so play around and see what you like more.</p>
 <p>If you want to try radare2 you can try the <a href="https://tryhackme.com/room/ccradare2">CC: Radare2</a> room in TryHackMe.</p>
 <h2>Sometimes It's Easy</h2>
-<p>Lastly I wanted to do a short example to serve as a word of caution. Let's say we have a Windows PE. </p>
+<p>Lastly, I wanted to do a short example to serve as a word of caution. Let's say we have a Windows PE. </p>
 <p><img alt="Test.exe" src="/images/binexp-corner-2/easy1.png"></p>
 <p>Let's say we don't know anything about it, and we throw it in ghidra, because hey it's a binary and we don't know anything about it.</p>
 <p><img alt="Functions in ghidra for test.exe" src="/images/binexp-corner-2/easy2.png"></p>
@@ -287,11 +287,11 @@ Throw it in <code>file</code>.</p>
 <p>And we get the whole source code. Sure it's very obfuscated, but we can start taking a better look at that, and we can also see what seems like the C2 address right there. (Yeah, I generated this simple stager in Covenant that C2 is just a local address don't go hunting for ghosts)</p>
 <p><img alt="Source Code!" src="/images/binexp-corner-2/easy5.png"></p>
 <p>So that was easy, no need to look at assembly, set breakpoints, etc. It was .Net, used a .Net analysis tool. Don't skip steps, do your research. The more you know about a sample before you start in depth analysis, the more likely you are to succeed.</p>
-<p>Another common example of this problem is when certain well known people try to decompile .dex files in ghidra and suddently are unable to understand relevant and are limited to string analysis. Instead, they could use a specific tool for .dex analysis (like jadx, or dex2jar and then a java decompiler), instead of making themselves look like fools.</p>
+<p>Another common example of this problem is when certain well known people try to decompile .dex files in ghidra and suddenly are unable to understand relevant and are limited to string analysis. Instead, they could use a specific tool for .dex analysis (like jadx, or dex2jar and then a java decompiler), instead of making themselves look like fools.</p>
 <p>Don't be a fool, don't skip steps, do your research.</p>
 <h2>Final Word</h2>
-<p>This was probably a long read, but hopefully it was helpful to get a general understanding of how to approach a both a little bit of static and dynamic analysis. In later episodes we want to cover things like, obfuscation and packers, encryption, memory protections and their bypasses, return oriented programming, and other things.</p>
-<p>Additionally, we only covered x64 and x32 bit architectures, there's also others like ARM, and you'll have to do your own research on those. A good resource for ARM assembly is at <a href="https://azeria-labs.com/writing-arm-assembly-part-1/">Azeria Labs</a>.</p>
+<p>This was probably a long read, but hopefully, it was helpful to get a general understanding of how to approach a both a little bit of static and dynamic analysis. In later episodes we want to cover things like, obfuscation and packers, encryption, memory protections and their bypasses, return oriented programming, and other things.</p>
+<p>Additionally, we only covered x64 and x32 bit architectures, there are also others like ARM, and you'll have to do your own research on those. A good resource for ARM assembly is at <a href="https://azeria-labs.com/writing-arm-assembly-part-1/">Azeria Labs</a>.</p>
 <p>Hope you enjoyed, if you did, dive deep and have fun.</p>
   </div>
   <div class="tag-cloud">
